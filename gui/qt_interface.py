@@ -101,18 +101,41 @@ class MemorySystemGUI(QWidget):
         user_item = QListWidgetItem(user_input)
         self.user_list.addItem(user_item)
 
-        # Dummy logic (replace with actual agent call)
-        context = ["Agent met a dragon.", "Agent learned fire magic."]
-        response = "The agent recalls using fire magic to defeat the dragon."
-        mood = "Curious, determined"
-        dreaming = "Summarizing recent battle experiences into schema..."
+        # Query the agent and update debug panels
+        response = self.agent.receive(user_input) if self.agent else ""
+
+        # Working memory context used by the agent
+        context = []
+        working = []
+        if self.agent:
+            from retrieval.cue_builder import build_cue
+            from retrieval.retriever import Retriever
+
+            cue = build_cue(user_input, state={"mood": self.agent.mood})
+            retriever = Retriever(self.agent.memory.all())
+            retrieved = retriever.query(cue, top_k=5)
+            context = [m.content for m in retrieved]
+            working = self.agent.working_memory()
+            dream_entries = [
+                m.content
+                for m in self.agent.memory.all()
+                if m.content.startswith("Dream:")
+            ]
+            dreaming = dream_entries[-1] if dream_entries else ""
+            mood = self.agent.mood
+        else:
+            mood = ""
+            dreaming = ""
 
         # Add response to middle panel
         response_item = QListWidgetItem(response)
         self.response_list.addItem(response_item)
 
         # Update right panel
-        self.memory_box.setPlainText(format_context(context))
+        mem_text = format_context(working)
+        if context:
+            mem_text += "\n\nRetrieved:\n" + format_context(context)
+        self.memory_box.setPlainText(mem_text)
         self.mood_box.setPlainText(mood)
         self.dream_box.setPlainText(dreaming)
 
