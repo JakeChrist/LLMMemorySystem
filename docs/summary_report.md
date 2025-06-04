@@ -46,6 +46,18 @@ llmemory/
   - Dummy placeholders for memory, mood, and dreaming.
 - 📦 Downloadable project ZIP with code templates and GUI included.
 
+### 🚀 Launching the GUI
+
+Create an ``Agent`` instance and pass it to ``run_gui``:
+
+```python
+from core.agent import Agent
+from gui.qt_interface import run_gui
+
+agent = Agent("local")
+run_gui(agent)
+```
+
 ---
 
 ## 🔜 Next Steps
