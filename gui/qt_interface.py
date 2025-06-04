@@ -27,9 +27,6 @@ class MemorySystemGUI(QWidget):
         self.setWindowTitle("LLMemory Agent Interface")
         self.resize(1200, 700)
 
-        # Layout setup
-        main_layout = QHBoxLayout(self)
-
         # Left Panel: User prompts
         self.user_list = QListWidget()
         self.user_list.setStyleSheet("background-color: #f7f7f7;")
