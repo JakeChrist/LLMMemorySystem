@@ -6,6 +6,13 @@ The **LLMemory system** is a local-first, reconstructive memory architecture for
 
 ---
 
+## Dependencies
+
+- Python 3.10+
+- [sentence-transformers](https://www.sbert.net/) *(optional)* — used by `encoding/encoder.py` for generating real embeddings when installed.
+
+---
+
 ## 📁 Project Directory Structure
 
 ```
