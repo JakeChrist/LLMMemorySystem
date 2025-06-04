@@ -6,6 +6,8 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 import sys
 
+from ms_utils import format_context
+
 class ChatBubble(QLabel):
     def __init__(self, text, is_user=True):
         super().__init__(text)
@@ -113,7 +115,7 @@ class MemorySystemGUI(QWidget):
         self.response_list.addItem(response_item)
 
         # Update right panel
-        self.memory_box.setPlainText("\n".join(context))
+        self.memory_box.setPlainText(format_context(context))
         self.mood_box.setPlainText(mood)
         self.dream_box.setPlainText(dreaming)
 
