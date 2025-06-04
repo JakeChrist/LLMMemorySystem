@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
+from pathlib import Path
+
 from core.memory_entry import MemoryEntry
 from core.memory_types.episodic import EpisodicMemory
 from core.memory_types.semantic import SemanticMemory
@@ -11,20 +13,29 @@ from core.memory_types.procedural import ProceduralMemory
 from core.working_memory import WorkingMemory
 from dreaming.dream_engine import DreamEngine
 from ms_utils.scheduler import Scheduler
+from storage.db_interface import Database
 
 
 class MemoryManager:
     """Coordinator for different memory systems."""
 
-    def __init__(self) -> None:
+    def __init__(self, db_path: str | Path = "memory.db") -> None:
+        self.db = Database(db_path)
         self.episodic = EpisodicMemory()
         self.semantic = SemanticMemory()
         self.procedural = ProceduralMemory()
         self.working = WorkingMemory()
 
+        # Load any existing memories from the database into episodic memory
+        existing = self.db.load_all()
+        self.episodic._entries.extend(existing)
+        if existing:
+            self.working.load(self.episodic.all())
+
     def add(self, content: str, *, emotions: Iterable[str] | None = None, metadata: dict | None = None) -> MemoryEntry:
         """Add content to episodic memory and update working memory."""
         entry = self.episodic.add(content, emotions=emotions, metadata=metadata)
+        self.db.save(entry)
         self.working.load(self.episodic.all())
         return entry
 

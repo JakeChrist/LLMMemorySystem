@@ -46,7 +46,7 @@ def test_retriever_with_faiss_index():
             with patch.object(encoder, "encode_text", side_effect=fake_encode):
                 with patch("core.memory_types.episodic.encode_text", side_effect=fake_encode):
                     with patch("retrieval.retriever.encode_text", side_effect=fake_encode):
-                        manager = MemoryManager()
+                        manager = MemoryManager(db_path=":memory:")
                         manager.add("the cat sat on the mat")
                         manager.add("dogs are wonderful companions")
 

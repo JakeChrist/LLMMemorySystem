@@ -9,7 +9,7 @@ from dreaming.dream_engine import DreamEngine
 
 
 def test_dream_run_summarizes_and_prunes():
-    manager = MemoryManager()
+    manager = MemoryManager(db_path=":memory:")
     for i in range(7):
         manager.add(f"event {i}")
 
@@ -26,7 +26,7 @@ def test_dream_run_summarizes_and_prunes():
 
 
 def test_manager_start_dreaming_uses_engine():
-    manager = MemoryManager()
+    manager = MemoryManager(db_path=":memory:")
 
     with patch.object(DreamEngine, "run", return_value=None) as mock_run:
         manager.start_dreaming(interval=1, summary_size=1, max_entries=10)
