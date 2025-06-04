@@ -26,3 +26,8 @@ class EpisodicMemory:
 
     def all(self) -> List[MemoryEntry]:
         return list(self._entries)
+
+    def prune(self, max_entries: int) -> None:
+        """Drop oldest entries beyond ``max_entries``."""
+        if len(self._entries) > max_entries:
+            self._entries = self._entries[-max_entries:]
