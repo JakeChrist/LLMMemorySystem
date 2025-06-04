@@ -9,7 +9,7 @@ from reconstruction.reconstructor import Reconstructor
 
 
 def test_memory_add_and_retrieve():
-    manager = MemoryManager()
+    manager = MemoryManager(db_path=":memory:")
     manager.add("the cat sat on the mat")
     manager.add("dogs are wonderful companions")
 
