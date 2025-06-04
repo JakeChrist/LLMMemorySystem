@@ -1,3 +1,5 @@
 # Default configuration
 memory:
   working_size: 10
+reconstruction:
+  max_context_length: 100
