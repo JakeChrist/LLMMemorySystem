@@ -89,3 +89,16 @@ run_gui(agent)
 ### 🧪 Testing & CLI
 - [ ] Build `test_memory_workflow.py` to simulate full memory loop.
 - [ ] Add CLI commands to query memory, trigger dreams, or reset state.
+
+### CLI Usage
+
+```
+python -m cli.memory_cli list
+python -m cli.memory_cli add "remember this" --model all-MiniLM-L6-v2
+python -m cli.memory_cli query "cats" --top-k 3 --model all-MiniLM-L6-v2
+python -m cli.memory_cli dream
+python -m cli.memory_cli reset
+```
+
+Use `--model` to select a sentence-transformers embedding model and `--top-k`
+to control query result count.
