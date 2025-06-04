@@ -6,6 +6,9 @@ from typing import List
 
 from core.emotion_model import analyze_emotions
 from core.memory_manager import MemoryManager
+from retrieval.cue_builder import build_cue
+from retrieval.retriever import Retriever
+from reconstruction.reconstructor import Reconstructor
 from llm import llm_router
 
 
@@ -26,8 +29,15 @@ class Agent:
         emotions = analyze_emotions(text)
         if emotions:
             self.mood = emotions[0]
+
         self.memory.add(text, emotions=emotions, metadata={"role": "user"})
-        context = "\n".join(self.working_memory())
+
+        cue = build_cue(text, state={"mood": self.mood})
+        retriever = Retriever(self.memory.all())
+        retrieved = retriever.query(cue, top_k=5)
+        reconstructor = Reconstructor()
+        context = reconstructor.build_context(retrieved, mood=self.mood)
+
         prompt = f"{context}\nUser: {text}" if context else text
         response = self.llm.generate(prompt)
         self.memory.add(response, metadata={"role": "assistant"})
