@@ -9,6 +9,8 @@ from core.memory_types.episodic import EpisodicMemory
 from core.memory_types.semantic import SemanticMemory
 from core.memory_types.procedural import ProceduralMemory
 from core.working_memory import WorkingMemory
+from dreaming.dream_engine import DreamEngine
+from ms_utils.scheduler import Scheduler
 
 
 class MemoryManager:
@@ -28,3 +30,32 @@ class MemoryManager:
 
     def all(self) -> List[MemoryEntry]:
         return self.episodic.all()
+
+    def prune(self, max_entries: int) -> None:
+        """Remove oldest episodic memories beyond ``max_entries``."""
+        self.episodic.prune(max_entries)
+        self.working.load(self.episodic.all())
+
+    def start_dreaming(
+        self,
+        *,
+        interval: float = 60.0,
+        summary_size: int = 5,
+        max_entries: int = 100,
+    ) -> Scheduler:
+        """Start background dreaming with the :class:`DreamEngine`."""
+
+        engine = DreamEngine()
+        self._dream_scheduler = engine.run(
+            self,
+            interval=interval,
+            summary_size=summary_size,
+            max_entries=max_entries,
+        )
+        return self._dream_scheduler
+
+    def stop_dreaming(self) -> None:
+        """Stop the background dreaming scheduler if running."""
+        sched = getattr(self, "_dream_scheduler", None)
+        if isinstance(sched, Scheduler):
+            sched.stop()
