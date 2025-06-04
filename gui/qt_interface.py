@@ -118,10 +118,19 @@ class MemorySystemGUI(QWidget):
         self.dream_box.setPlainText(dreaming)
 
 def run_gui(agent=None):
-    app = QApplication(sys.argv)
+    """Launch the Qt GUI and return when the window is closed."""
+    # QApplication should be instantiated once in a process.  Creating
+    # a new instance when one already exists raises a runtime error,
+    # which can easily happen in interactive sessions (e.g. Jupyter).
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication(sys.argv)
+
     gui = MemorySystemGUI(agent)
     gui.show()
-    sys.exit(app.exec_())
+    # exec_() is deprecated in modern PyQt5 versions but still supported.
+    # Using exec() keeps compatibility with both newer and older releases.
+    sys.exit(app.exec())
 
 # Usage:
 # from gui.qt_interface import run_gui
