@@ -55,3 +55,9 @@ class Database:
                 )
             )
         return entries
+
+    def clear(self) -> None:
+        """Delete all stored memories."""
+        cur = self.conn.cursor()
+        cur.execute("DELETE FROM memories")
+        self.conn.commit()
