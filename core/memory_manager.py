@@ -1,28 +1,30 @@
 """Manage creation and storage of memories."""
 
+from __future__ import annotations
+
 from typing import Iterable, List
 
 from core.memory_entry import MemoryEntry
-from encoding.encoder import encode_text
+from core.memory_types.episodic import EpisodicMemory
+from core.memory_types.semantic import SemanticMemory
+from core.memory_types.procedural import ProceduralMemory
+from core.working_memory import WorkingMemory
 
 
 class MemoryManager:
-    """In-memory implementation of the memory store."""
+    """Coordinator for different memory systems."""
 
     def __init__(self) -> None:
-        self._entries: List[MemoryEntry] = []
+        self.episodic = EpisodicMemory()
+        self.semantic = SemanticMemory()
+        self.procedural = ProceduralMemory()
+        self.working = WorkingMemory()
 
     def add(self, content: str, *, emotions: Iterable[str] | None = None, metadata: dict | None = None) -> MemoryEntry:
-        """Create and store a new :class:`MemoryEntry`."""
-        entry = MemoryEntry(
-            content=content,
-            embedding=encode_text(content),
-            emotions=list(emotions or []),
-            metadata=metadata or {},
-        )
-        self._entries.append(entry)
+        """Add content to episodic memory and update working memory."""
+        entry = self.episodic.add(content, emotions=emotions, metadata=metadata)
+        self.working.load(self.episodic.all())
         return entry
 
     def all(self) -> List[MemoryEntry]:
-        """Return list of all stored memories."""
-        return list(self._entries)
+        return self.episodic.all()
