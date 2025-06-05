@@ -1,0 +1,11 @@
+# Core optional dependencies
+sentence-transformers
+transformers
+openai
+anthropic
+google-generativeai
+PyQt5
+numpy
+faiss
+pyyaml
+pytest
