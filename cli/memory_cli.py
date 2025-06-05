@@ -5,6 +5,10 @@ from __future__ import annotations
 import argparse
 from datetime import datetime
 
+from ms_utils.logger import Logger
+
+logger = Logger(__name__)
+
 from core.emotion_model import analyze_emotions
 from core.memory_entry import MemoryEntry
 from encoding.encoder import encode_text, set_model_name
@@ -19,7 +23,7 @@ def list_memories(db: Database) -> None:
     memories = db.load_all()
     for i, mem in enumerate(memories, 1):
         ts = mem.timestamp.isoformat()
-        print(f"{i}. {ts} - {mem.content}")
+        logger.info(f"{i}. {ts} - {mem.content}")
 
 
 def add_memory(db: Database, text: str, model: str | None = None) -> None:
@@ -33,7 +37,7 @@ def add_memory(db: Database, text: str, model: str | None = None) -> None:
         metadata={"tags": tags},
     )
     db.save(entry)
-    print("Memory added.")
+    logger.info("Memory added.")
 
 
 def query_memories(
@@ -46,7 +50,7 @@ def query_memories(
     retriever = Retriever(memories)
     results = retriever.query(text, top_k=top_k)
     for mem in results:
-        print(f"{mem.timestamp.isoformat()} - {mem.content}")
+        logger.info(f"{mem.timestamp.isoformat()} - {mem.content}")
 
 
 def dream_summary(db: Database) -> None:
@@ -54,7 +58,7 @@ def dream_summary(db: Database) -> None:
     memories = db.load_all()
     engine = DreamEngine()
     summary = engine.summarize(memories)
-    print(summary)
+    logger.info(summary)
 
 
 def reset_database(db: Database, *, assume_yes: bool = False) -> None:
@@ -62,10 +66,10 @@ def reset_database(db: Database, *, assume_yes: bool = False) -> None:
     if not assume_yes:
         ans = input("Delete all memories? [y/N] ").strip().lower()
         if ans not in {"y", "yes"}:
-            print("Aborted.")
+            logger.warning("Aborted.")
             return
     db.clear()
-    print("Database cleared.")
+    logger.info("Database cleared.")
 
 
 def edit_memory(
@@ -79,12 +83,12 @@ def edit_memory(
     ts = datetime.fromisoformat(timestamp)
     entries = [m for m in db.load_all() if m.timestamp.isoformat() == timestamp]
     if not entries:
-        print("Entry not found.")
+        logger.warning("Entry not found.")
         return
     if not assume_yes:
         ans = input(f"Edit memory at {timestamp}? [y/N] ").strip().lower()
         if ans not in {"y", "yes"}:
-            print("Aborted.")
+            logger.warning("Aborted.")
             return
     emotions = analyze_emotions(text)
     tags = tag_text(text)
@@ -96,7 +100,7 @@ def edit_memory(
         metadata={"tags": tags},
     )
     db.update(ts, updated)
-    print("Memory updated.")
+    logger.info("Memory updated.")
 
 
 def delete_memory(db: Database, timestamp: str, *, assume_yes: bool = False) -> None:
@@ -104,15 +108,15 @@ def delete_memory(db: Database, timestamp: str, *, assume_yes: bool = False) -> 
     ts = datetime.fromisoformat(timestamp)
     entries = [m for m in db.load_all() if m.timestamp.isoformat() == timestamp]
     if not entries:
-        print("Entry not found.")
+        logger.warning("Entry not found.")
         return
     if not assume_yes:
         ans = input(f"Delete memory at {timestamp}? [y/N] ").strip().lower()
         if ans not in {"y", "yes"}:
-            print("Aborted.")
+            logger.warning("Aborted.")
             return
     db.delete(ts)
-    print("Memory deleted.")
+    logger.info("Memory deleted.")
 
 
 def list_sem(db: Database) -> None:
@@ -120,14 +124,14 @@ def list_sem(db: Database) -> None:
     memories = db.load_all_semantic()
     for i, mem in enumerate(memories, 1):
         ts = mem.timestamp.isoformat()
-        print(f"{i}. {ts} - {mem.content}")
+        logger.info(f"{i}. {ts} - {mem.content}")
 
 
 def add_sem(db: Database, text: str) -> None:
     """Add a semantic memory entry."""
     entry = MemoryEntry(content=text, embedding=encode_text(text), emotions=[], metadata={})
     db.save_semantic(entry)
-    print("Semantic memory added.")
+    logger.info("Semantic memory added.")
 
 
 def edit_sem(db: Database, timestamp: str, text: str, *, assume_yes: bool = False) -> None:
@@ -135,12 +139,12 @@ def edit_sem(db: Database, timestamp: str, text: str, *, assume_yes: bool = Fals
     ts = datetime.fromisoformat(timestamp)
     entries = [m for m in db.load_all_semantic() if m.timestamp.isoformat() == timestamp]
     if not entries:
-        print("Entry not found.")
+        logger.warning("Entry not found.")
         return
     if not assume_yes:
         ans = input(f"Edit semantic memory at {timestamp}? [y/N] ").strip().lower()
         if ans not in {"y", "yes"}:
-            print("Aborted.")
+            logger.warning("Aborted.")
             return
     existing = entries[0]
     updated = MemoryEntry(
@@ -151,7 +155,7 @@ def edit_sem(db: Database, timestamp: str, text: str, *, assume_yes: bool = Fals
         metadata=existing.metadata,
     )
     db.update_semantic(ts, updated)
-    print("Semantic memory updated.")
+    logger.info("Semantic memory updated.")
 
 
 def delete_sem(db: Database, timestamp: str, *, assume_yes: bool = False) -> None:
@@ -159,15 +163,15 @@ def delete_sem(db: Database, timestamp: str, *, assume_yes: bool = False) -> Non
     ts = datetime.fromisoformat(timestamp)
     entries = [m for m in db.load_all_semantic() if m.timestamp.isoformat() == timestamp]
     if not entries:
-        print("Entry not found.")
+        logger.warning("Entry not found.")
         return
     if not assume_yes:
         ans = input(f"Delete semantic memory at {timestamp}? [y/N] ").strip().lower()
         if ans not in {"y", "yes"}:
-            print("Aborted.")
+            logger.warning("Aborted.")
             return
     db.delete_semantic(ts)
-    print("Semantic memory deleted.")
+    logger.info("Semantic memory deleted.")
 
 
 def list_proc(db: Database) -> None:
@@ -175,14 +179,14 @@ def list_proc(db: Database) -> None:
     memories = db.load_all_procedural()
     for i, mem in enumerate(memories, 1):
         ts = mem.timestamp.isoformat()
-        print(f"{i}. {ts} - {mem.content}")
+        logger.info(f"{i}. {ts} - {mem.content}")
 
 
 def add_proc(db: Database, text: str) -> None:
     """Add a procedural memory entry."""
     entry = MemoryEntry(content=text, embedding=encode_text(text), emotions=[], metadata={})
     db.save_procedural(entry)
-    print("Procedural memory added.")
+    logger.info("Procedural memory added.")
 
 
 def edit_proc(db: Database, timestamp: str, text: str, *, assume_yes: bool = False) -> None:
@@ -190,12 +194,12 @@ def edit_proc(db: Database, timestamp: str, text: str, *, assume_yes: bool = Fal
     ts = datetime.fromisoformat(timestamp)
     entries = [m for m in db.load_all_procedural() if m.timestamp.isoformat() == timestamp]
     if not entries:
-        print("Entry not found.")
+        logger.warning("Entry not found.")
         return
     if not assume_yes:
         ans = input(f"Edit procedural memory at {timestamp}? [y/N] ").strip().lower()
         if ans not in {"y", "yes"}:
-            print("Aborted.")
+            logger.warning("Aborted.")
             return
     existing = entries[0]
     updated = MemoryEntry(
@@ -206,7 +210,7 @@ def edit_proc(db: Database, timestamp: str, text: str, *, assume_yes: bool = Fal
         metadata=existing.metadata,
     )
     db.update_procedural(ts, updated)
-    print("Procedural memory updated.")
+    logger.info("Procedural memory updated.")
 
 
 def delete_proc(db: Database, timestamp: str, *, assume_yes: bool = False) -> None:
@@ -214,15 +218,15 @@ def delete_proc(db: Database, timestamp: str, *, assume_yes: bool = False) -> No
     ts = datetime.fromisoformat(timestamp)
     entries = [m for m in db.load_all_procedural() if m.timestamp.isoformat() == timestamp]
     if not entries:
-        print("Entry not found.")
+        logger.warning("Entry not found.")
         return
     if not assume_yes:
         ans = input(f"Delete procedural memory at {timestamp}? [y/N] ").strip().lower()
         if ans not in {"y", "yes"}:
-            print("Aborted.")
+            logger.warning("Aborted.")
             return
     db.delete_procedural(ts)
-    print("Procedural memory deleted.")
+    logger.info("Procedural memory deleted.")
 
 
 def main(argv: list[str] | None = None) -> None:

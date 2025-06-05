@@ -6,6 +6,9 @@ from typing import Iterable, TYPE_CHECKING
 
 from ms_utils import format_context, Scheduler
 from llm import llm_router
+from ms_utils.logger import Logger
+
+logger = Logger(__name__)
 from core.memory_types.semantic import SemanticMemory
 
 if TYPE_CHECKING:  # pragma: no cover - for type hints only
@@ -45,6 +48,7 @@ class DreamEngine:
         summary = "Dream: " + summary
         if semantic is not None:
             semantic.add(summary)
+        logger.info(summary)
         return summary
 
     def run(
