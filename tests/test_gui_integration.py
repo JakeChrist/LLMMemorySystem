@@ -91,3 +91,38 @@ def test_update_countdown_refreshes_dream_box():
 
 
     app.quit()
+
+
+def test_update_countdown_refreshes_think_box():
+    app = QApplication.instance() or QApplication([])
+
+    entries = [
+        MemoryEntry(
+            content="thought1",
+            embedding=[],
+            timestamp=datetime.utcnow(),
+            metadata={"tags": ["introspection"]},
+        )
+    ]
+
+    mock_agent = MagicMock()
+    mock_agent.memory.all.return_value = entries
+    mock_agent.memory.time_until_dream.return_value = None
+
+    gui = MemorySystemGUI(mock_agent)
+
+    # New introspection entry added
+    entries.append(
+        MemoryEntry(
+            content="thought2",
+            embedding=[],
+            timestamp=datetime.utcnow(),
+            metadata={"tags": ["introspection"]},
+        )
+    )
+
+    gui.update_countdown()
+
+    assert "thought2" in gui.think_box.toPlainText()
+
+    app.quit()
