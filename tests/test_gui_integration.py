@@ -9,9 +9,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import pytest
 
 PyQt5 = pytest.importorskip("PyQt5")
-from PyQt5.QtWidgets import QApplication, QLabel
+from PyQt5.QtWidgets import QApplication, QLabel, QDialog
 
 from gui.qt_interface import MemorySystemGUI, MemoryBrowser
+import gui.qt_interface as gui_mod
 from core.memory_entry import MemoryEntry
 from core.memory_manager import MemoryManager
 import main
@@ -152,3 +153,36 @@ def test_main_gui_initializes_scheduler(tmp_path):
         )
         mock_instance.run.assert_called_once()
         runner.stop.assert_called_once()
+
+
+def test_settings_dialog_updates_scheduler(monkeypatch):
+    app = QApplication.instance() or QApplication([])
+
+    scheduler = MagicMock()
+    scheduler.T_think = 5.0
+    scheduler.T_dream = 10.0
+    scheduler.T_alarm = 20.0
+    scheduler.notify_input = MagicMock()
+
+    gui = MemorySystemGUI(None, scheduler=scheduler)
+
+    class FakeDialog:
+        def __init__(self, sched):
+            self.sched = sched
+
+        def exec(self):
+            return QDialog.Accepted
+
+        def values(self):
+            return 1.0, 2.0, 3.0
+
+    monkeypatch.setattr(gui_mod, "SchedulerSettingsDialog", FakeDialog)
+
+    gui.show_settings()
+
+    assert scheduler.T_think == 1.0
+    assert scheduler.T_dream == 2.0
+    assert scheduler.T_alarm == 3.0
+    assert scheduler.notify_input.called
+
+    app.quit()
