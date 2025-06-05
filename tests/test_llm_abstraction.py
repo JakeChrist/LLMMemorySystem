@@ -85,3 +85,15 @@ def test_agent_and_cli_end_to_end(tmp_path, capsys):
         memory_cli.dream_summary(db)
     out = capsys.readouterr().out
     assert "Dream:" in out
+
+
+def test_lmstudio_timeout_env(monkeypatch):
+    monkeypatch.setenv("LMSTUDIO_TIMEOUT", "99")
+    backend = LMStudioBackend()
+    assert backend.timeout == 99.0
+
+
+def test_lmstudio_timeout_argument(monkeypatch):
+    monkeypatch.setenv("LMSTUDIO_TIMEOUT", "33")
+    backend = LMStudioBackend(timeout=44)
+    assert backend.timeout == 44
