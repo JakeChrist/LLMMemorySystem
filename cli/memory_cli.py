@@ -119,6 +119,11 @@ def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         description="Memory management CLI for stored agent memories"
     )
+    parser.add_argument(
+        "--db",
+        default="memory.db",
+        help="Path to SQLite database",
+    )
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     sub.add_parser("list", help="List stored memories")
@@ -158,7 +163,7 @@ def main(argv: list[str] | None = None) -> None:
 
     args = parser.parse_args(argv)
 
-    db = Database()
+    db = Database(args.db)
 
     if args.cmd == "list":
         list_memories(db)

@@ -102,3 +102,13 @@ python -m cli.memory_cli reset
 
 Use `--model` to select a sentence-transformers embedding model and `--top-k`
 to control query result count.
+
+### Launching with custom backends
+
+You can run the main entry point with a specific LLM backend and database path:
+
+```
+python main.py repl --llm openai --db ./my.db
+python main.py gui --llm openai --db ./my.db
+python main.py cli --db ./my.db list
+```
