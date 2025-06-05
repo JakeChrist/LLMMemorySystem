@@ -57,15 +57,16 @@ def main(argv: list[str] | None = None) -> None:
         from gui.qt_interface import run_gui
 
         from core.agent import Agent
+        from core.cognitive_scheduler import CognitiveScheduler
 
         agent = Agent(args.llm, db_path=args.db)
-        # Start background dreaming when launching the GUI so that summaries
-        # accumulate automatically while the interface is open.
-        scheduler = agent.memory.start_dreaming(llm_name=agent.llm_name)
+        # Manage dreaming and thinking automatically via the cognitive scheduler.
+        scheduler = CognitiveScheduler(agent.memory)
+        runner = scheduler.run()
         try:
             run_gui(agent)
         finally:
-            scheduler.stop()
+            runner.stop()
     else:  # repl
         run_repl(args.llm, args.db)
 

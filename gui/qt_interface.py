@@ -220,11 +220,17 @@ class MemorySystemGUI(QWidget):
         if not self.agent:
             self.countdown_label.setText("")
             return
-        remaining = self.agent.memory.time_until_dream()
-        if remaining is None:
+        dream = self.agent.memory.time_until_dream()
+        think = self.agent.memory.time_until_think()
+        if dream is None and think is None:
             self.countdown_label.setText("")
         else:
-            self.countdown_label.setText(f"{int(remaining)}s")
+            parts = []
+            if dream is not None:
+                parts.append(f"D:{int(dream)}s")
+            if think is not None:
+                parts.append(f"T:{int(think)}s")
+            self.countdown_label.setText(" | ".join(parts))
 
         dream_entries = [
             m for m in self.agent.memory.all()

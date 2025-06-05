@@ -14,6 +14,7 @@ from PyQt5.QtWidgets import QApplication, QLabel
 from gui.qt_interface import MemorySystemGUI, MemoryBrowser
 from core.memory_entry import MemoryEntry
 from core.memory_manager import MemoryManager
+import main
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -78,6 +79,7 @@ def test_update_countdown_refreshes_dream_box():
     mock_agent = MagicMock()
     mock_agent.memory.all.return_value = entries
     mock_agent.memory.time_until_dream.return_value = 10
+    mock_agent.memory.time_until_think.return_value = 5
 
     gui = MemorySystemGUI(mock_agent)
 
@@ -87,7 +89,9 @@ def test_update_countdown_refreshes_dream_box():
     gui.update_countdown()
 
     assert "Dream: second" in gui.dream_box.toPlainText()
-    assert gui.countdown_label.text() == "10s"
+    label = gui.countdown_label.text()
+    assert "D:10s" in label
+    assert "T:5s" in label
 
 
     app.quit()
@@ -108,6 +112,7 @@ def test_update_countdown_refreshes_think_box():
     mock_agent = MagicMock()
     mock_agent.memory.all.return_value = entries
     mock_agent.memory.time_until_dream.return_value = None
+    mock_agent.memory.time_until_think.return_value = 7
 
     gui = MemorySystemGUI(mock_agent)
 
@@ -124,5 +129,24 @@ def test_update_countdown_refreshes_think_box():
     gui.update_countdown()
 
     assert "thought2" in gui.think_box.toPlainText()
+    label = gui.countdown_label.text()
+    assert "T:7s" in label
 
     app.quit()
+
+
+def test_main_gui_initializes_scheduler(tmp_path):
+    db = tmp_path / "mem.db"
+    with patch("main.run_gui") as mock_gui, \
+            patch("core.agent.Agent") as MockAgent, \
+            patch("core.cognitive_scheduler.CognitiveScheduler") as MockSched:
+        mock_instance = MockSched.return_value
+        runner = MagicMock()
+        mock_instance.run.return_value = runner
+
+        main.main(["gui", "--db", str(db), "--llm", "local"])
+
+        MockAgent.assert_called_once_with("local", db_path=str(db))
+        MockSched.assert_called_once_with(MockAgent.return_value.memory)
+        mock_instance.run.assert_called_once()
+        runner.stop.assert_called_once()
