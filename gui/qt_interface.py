@@ -98,7 +98,6 @@ class MemorySystemGUI(QWidget):
     def __init__(self, agent):
         super().__init__()
         self.agent = agent
-        self._last_dream: MemoryEntry | None = None
         self.init_ui()
 
     def init_ui(self):
@@ -133,13 +132,13 @@ class MemorySystemGUI(QWidget):
         right_panel.addWidget(self.dream_box)
         if self.agent:
             dream_entries = [
-                m
+
                 for m in self.agent.memory.all()
                 if m.content.startswith("Dream:")
             ]
             if dream_entries:
                 self._last_dream = dream_entries[-1]
-                self.dream_box.setPlainText(self._last_dream.content)
+
 
         right_panel.addWidget(QLabel("Next Dream"))
         self.countdown_label = QLabel("")
@@ -214,18 +213,13 @@ class MemorySystemGUI(QWidget):
             self.countdown_label.setText(f"{int(remaining)}s")
 
         dream_entries = [
-            m
+
             for m in self.agent.memory.all()
             if m.content.startswith("Dream:")
         ]
         if dream_entries:
             latest = dream_entries[-1]
-            if (
-                self._last_dream is None
-                or latest.timestamp != self._last_dream.timestamp
-            ):
-                self._last_dream = latest
-                self.dream_box.setPlainText(latest.content)
+
 
     def show_memories(self):
         if not self.agent:
@@ -285,8 +279,7 @@ class MemorySystemGUI(QWidget):
         self.memory_box.setPlainText(mem_text)
         self.mood_box.setPlainText(mood)
         self.dream_box.setPlainText(dreaming)
-        if dreaming_entry:
-            self._last_dream = dreaming_entry
+
 
 def run_gui(agent=None):
     """Launch the Qt GUI and return when the window is closed."""
