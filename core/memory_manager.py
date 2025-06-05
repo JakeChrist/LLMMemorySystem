@@ -11,6 +11,7 @@ from core.memory_types.episodic import EpisodicMemory
 from core.memory_types.semantic import SemanticMemory
 from core.memory_types.procedural import ProceduralMemory
 from core.working_memory import WorkingMemory
+from reconstruction.reconstructor import _load_config
 from dreaming.dream_engine import DreamEngine
 from ms_utils.scheduler import Scheduler
 from storage.db_interface import Database
@@ -21,10 +22,12 @@ class MemoryManager:
 
     def __init__(self, db_path: str | Path = "memory.db") -> None:
         self.db = Database(db_path)
+        cfg = _load_config()
+        working_size = cfg.get("memory", {}).get("working_size", 10)
         self.episodic = EpisodicMemory()
         self.semantic = SemanticMemory()
         self.procedural = ProceduralMemory()
-        self.working = WorkingMemory()
+        self.working = WorkingMemory(working_size)
 
         # Load any existing memories from the database into memory stores
         episodic = self.db.load_all()
