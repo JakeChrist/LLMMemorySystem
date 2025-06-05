@@ -47,6 +47,23 @@ class MemoryManager:
         self.episodic.prune(max_entries)
         self.working.load(self.episodic.all())
 
+    def delete(self, entry: MemoryEntry) -> None:
+        """Remove ``entry`` from memory and persistent storage."""
+        if entry in self.episodic._entries:
+            self.episodic._entries.remove(entry)
+            self.db.delete(entry.timestamp)
+            self.working.load(self.episodic.all())
+
+    def update(self, entry: MemoryEntry, new_content: str) -> None:
+        """Modify the content of ``entry`` and persist the change."""
+        if entry in self.episodic._entries:
+            entry.content = new_content
+            from encoding.encoder import encode_text
+
+            entry.embedding = encode_text(new_content)
+            self.db.update(entry.timestamp, entry)
+            self.working.load(self.episodic.all())
+
     def start_dreaming(
         self,
         *,

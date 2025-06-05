@@ -1,12 +1,76 @@
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QTextEdit,
     QPushButton, QLabel, QListWidget, QScrollArea, QListWidgetItem,
-    QSplitter, QFrame, QSizePolicy
+    QSplitter, QFrame, QSizePolicy, QDialog
 )
 from PyQt5.QtCore import Qt
 import sys
 
 from ms_utils import format_context
+
+
+class MemoryBrowser(QDialog):
+    """Dialog for inspecting and editing stored memories."""
+
+    def __init__(self, manager):
+        super().__init__()
+        self.manager = manager
+        self.current: object | None = None
+        self.setWindowTitle("Stored Memories")
+
+        main = QHBoxLayout()
+        self.list = QListWidget()
+        self.list.currentRowChanged.connect(self.display_memory)
+        main.addWidget(self.list)
+
+        detail_layout = QVBoxLayout()
+        self.detail = QTextEdit()
+        detail_layout.addWidget(self.detail)
+
+        btn_row = QHBoxLayout()
+        self.save_btn = QPushButton("Save")
+        self.del_btn = QPushButton("Delete")
+        btn_row.addWidget(self.save_btn)
+        btn_row.addWidget(self.del_btn)
+        detail_layout.addLayout(btn_row)
+        main.addLayout(detail_layout)
+
+        self.setLayout(main)
+
+        self.save_btn.clicked.connect(self.save_current)
+        self.del_btn.clicked.connect(self.delete_current)
+
+        self.refresh()
+
+    def refresh(self) -> None:
+        self.list.clear()
+        for mem in self.manager.all():
+            text = f"{mem.timestamp.isoformat()} - {mem.content[:30]}"
+            self.list.addItem(text)
+
+    def display_memory(self, row: int) -> None:
+        entries = self.manager.all()
+        if 0 <= row < len(entries):
+            self.current = entries[row]
+            self.detail.setPlainText(entries[row].content)
+        else:
+            self.current = None
+            self.detail.clear()
+
+    def save_current(self) -> None:
+        if self.current is None:
+            return
+        new_text = self.detail.toPlainText()
+        if new_text != self.current.content:
+            self.manager.update(self.current, new_text)
+            self.refresh()
+
+    def delete_current(self) -> None:
+        if self.current is None:
+            return
+        self.manager.delete(self.current)
+        self.current = None
+        self.refresh()
 
 class ChatBubble(QLabel):
     def __init__(self, text, is_user=True):
@@ -60,6 +124,10 @@ class MemorySystemGUI(QWidget):
         self.dream_box.setReadOnly(True)
         right_panel.addWidget(self.dream_box)
 
+        self.mem_button = QPushButton("Browse Memories")
+        self.mem_button.clicked.connect(self.show_memories)
+        right_panel.addWidget(self.mem_button)
+
         # Input bar
         self.input_box = QTextEdit()
         self.input_box.setMaximumHeight(80)
@@ -90,6 +158,12 @@ class MemorySystemGUI(QWidget):
         main_column.addLayout(input_layout)
 
         self.setLayout(main_column)
+
+    def show_memories(self):
+        if not self.agent:
+            return
+        dlg = MemoryBrowser(self.agent.memory)
+        dlg.exec()
 
     def handle_submit(self):
         user_input = self.input_box.toPlainText().strip()

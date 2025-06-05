@@ -61,3 +61,24 @@ class Database:
         cur = self.conn.cursor()
         cur.execute("DELETE FROM memories")
         self.conn.commit()
+
+    def delete(self, timestamp: datetime) -> None:
+        """Remove a memory entry by timestamp."""
+        cur = self.conn.cursor()
+        cur.execute("DELETE FROM memories WHERE timestamp=?", (timestamp.timestamp(),))
+        self.conn.commit()
+
+    def update(self, timestamp: datetime, entry: MemoryEntry) -> None:
+        """Update a memory entry identified by ``timestamp`` with new values."""
+        cur = self.conn.cursor()
+        cur.execute(
+            "UPDATE memories SET content=?, embedding=?, emotions=?, metadata=? WHERE timestamp=?",
+            (
+                entry.content,
+                json.dumps(entry.embedding),
+                ",".join(entry.emotions),
+                json.dumps(entry.metadata),
+                timestamp.timestamp(),
+            ),
+        )
+        self.conn.commit()
