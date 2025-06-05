@@ -6,6 +6,7 @@ import argparse
 from datetime import datetime
 
 from ms_utils.logger import Logger
+import time
 
 logger = Logger(__name__)
 
@@ -233,9 +234,15 @@ def delete_proc(db: Database, timestamp: str, *, assume_yes: bool = False) -> No
 
 
 def start_dream(manager: MemoryManager, *, interval: float = 60.0) -> None:
-    """Begin periodic dreaming using ``MemoryManager``."""
-    manager.start_dreaming(interval=interval)
-    logger.info("Dreaming started.")
+    """Begin periodic dreaming using ``MemoryManager`` and block until interrupted."""
+    scheduler = manager.start_dreaming(interval=interval)
+    logger.info("Dreaming started. Press Ctrl+C to stop.")
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        scheduler.stop()
+        logger.info("Dreaming stopped.")
 
 
 def stop_dream(manager: MemoryManager) -> None:

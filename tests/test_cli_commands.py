@@ -1,6 +1,9 @@
 import sys
 from pathlib import Path
 from unittest.mock import patch, MagicMock
+import threading
+import time
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -113,12 +116,44 @@ def test_semantic_and_procedural_cli(tmp_path, capsys, monkeypatch):
     assert db.load_all_procedural() == []
 
 
-def test_start_and_stop_dreaming():
+def test_start_and_stop_dreaming(monkeypatch):
     manager = MagicMock()
+    scheduler = MagicMock()
+    manager.start_dreaming.return_value = scheduler
+
+    monkeypatch.setattr(memory_cli.time, "sleep", lambda *_: (_ for _ in ()).throw(KeyboardInterrupt()))
     memory_cli.start_dream(manager, interval=5)
+
     manager.start_dreaming.assert_called_once_with(interval=5)
+    scheduler.stop.assert_called_once()
     memory_cli.stop_dream(manager)
     manager.stop_dreaming.assert_called_once()
+
+
+def test_start_dream_blocks_until_interrupt(monkeypatch):
+    manager = MagicMock()
+    scheduler = MagicMock()
+    manager.start_dreaming.return_value = scheduler
+
+    stop_event = threading.Event()
+    orig_sleep = time.sleep
+
+    def fake_sleep(_):
+        if stop_event.is_set():
+            raise KeyboardInterrupt()
+        orig_sleep(0.01)
+
+    monkeypatch.setattr(memory_cli.time, "sleep", fake_sleep)
+
+    t = threading.Thread(target=memory_cli.start_dream, args=(manager,))
+    t.start()
+    orig_sleep(0.05)
+    assert t.is_alive()
+    stop_event.set()
+    t.join(timeout=1)
+    assert not t.is_alive()
+
+    scheduler.stop.assert_called_once()
 
 
 def test_reset_database_clears_all_categories(tmp_path):

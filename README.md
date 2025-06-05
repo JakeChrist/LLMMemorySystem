@@ -32,6 +32,10 @@ start-dream [--interval SECS]
 stop-dream
 ```
 
+`start-dream` runs continuously until interrupted with `Ctrl+C`. The
+`stop-dream` command only works when the dreaming scheduler is started
+programmatically in the same process.
+
 ### REPL and GUI
 
 ```
