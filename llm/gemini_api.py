@@ -27,7 +27,7 @@ class GeminiBackend(BaseLLM):
 
     def generate(self, prompt: str) -> str:
         if self.model is None:
-            return f"Gemini unavailable: {prompt}"
+            return "Gemini backend unavailable."
         resp: Any = self.model.generate_content(prompt)
         return getattr(resp, "text", str(resp)).strip()
 
