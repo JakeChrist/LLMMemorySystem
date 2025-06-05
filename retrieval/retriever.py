@@ -107,7 +107,8 @@ class Retriever:
                     sim = self._cosine_dense(embedding, vec)
                     recency = 1 / ((now - memory.timestamp).total_seconds() + 1)
                     weight = self._recency_weights[self._types[i]]
-                    boost = 0.1 if mood in memory.emotions else 0.0
+                    score = memory.emotion_scores.get(mood, 0.0)
+                    boost = float(score)
                     tag_score = (
                         len(q_tags & self._tags[i]) / len(q_tags) if q_tags else 0.0
                     )
@@ -122,7 +123,8 @@ class Retriever:
                 sim = self._cosine_dense(embedding, vec)
                 recency = 1 / ((now - memory.timestamp).total_seconds() + 1)
                 weight = self._recency_weights[self._types[i]]
-                boost = 0.1 if mood and mood in memory.emotions else 0.0
+                score = memory.emotion_scores.get(mood, 0.0) if mood else 0.0
+                boost = float(score)
                 tag_score = (
                     len(q_tags & self._tags[i]) / len(q_tags) if q_tags else 0.0
                 )
@@ -141,7 +143,8 @@ class Retriever:
             sim = self._cosine(q_vec, vec)
             recency = 1 / ((now - memory.timestamp).total_seconds() + 1)
             weight = self._recency_weights[self._types[i]]
-            boost = 0.1 if mood and mood in memory.emotions else 0.0
+            score = memory.emotion_scores.get(mood, 0.0) if mood else 0.0
+            boost = float(score)
             tag_score = (
                 len(q_tags & self._tags[i]) / len(q_tags) if q_tags else 0.0
             )
