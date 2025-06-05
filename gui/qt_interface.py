@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import (
     QSplitter,
     QSizePolicy,
     QDialog,
+    QListWidget,
 )
 from PyQt5.QtCore import Qt, QTimer
 import sys
