@@ -98,6 +98,7 @@ class MemorySystemGUI(QWidget):
     def __init__(self, agent):
         super().__init__()
         self.agent = agent
+        self._last_dream = None
         self.init_ui()
 
     def init_ui(self):
@@ -132,8 +133,7 @@ class MemorySystemGUI(QWidget):
         right_panel.addWidget(self.dream_box)
         if self.agent:
             dream_entries = [
-
-                for m in self.agent.memory.all()
+                m for m in self.agent.memory.all()
                 if m.content.startswith("Dream:")
             ]
             if dream_entries:
@@ -213,13 +213,14 @@ class MemorySystemGUI(QWidget):
             self.countdown_label.setText(f"{int(remaining)}s")
 
         dream_entries = [
-
-            for m in self.agent.memory.all()
+            m for m in self.agent.memory.all()
             if m.content.startswith("Dream:")
         ]
         if dream_entries:
             latest = dream_entries[-1]
-
+            if latest is not self._last_dream:
+                self.dream_box.setPlainText(latest.content)
+                self._last_dream = latest
 
     def show_memories(self):
         if not self.agent:
