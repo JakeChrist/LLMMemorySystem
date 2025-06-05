@@ -4,13 +4,16 @@ from __future__ import annotations
 
 import random
 import time
-from typing import Iterable, List
+from typing import Iterable, List, TYPE_CHECKING
 
 from retrieval.cue_builder import build_cue
 from retrieval.retriever import Retriever
 from reconstruction.reconstructor import Reconstructor
 from llm import llm_router
 from ms_utils import Scheduler
+
+if TYPE_CHECKING:  # pragma: no cover - for type hints only
+    from core.memory_manager import MemoryManager
 
 
 class ThinkingEngine:
@@ -25,18 +28,35 @@ class ThinkingEngine:
     ]
 
     def __init__(self, prompts: Iterable[str] | None = None) -> None:
-        self.prompts = list(prompts) if prompts is not None else self.DEFAULT_PROMPTS
+        self.prompts = (
+            list(prompts) if prompts is not None else self.DEFAULT_PROMPTS
+        )
 
     def _select_prompt(self) -> str:
         return random.choice(self.prompts)
 
     def think_once(
         self,
-        manager,
+        manager: "MemoryManager",
         mood: str,
         llm_name: str = "local",
     ) -> str:
-        """Generate a single reflective thought using the provided manager."""
+        """Generate one introspective thought.
+
+        Parameters
+        ----------
+        manager:
+            Memory manager providing access to memories.
+        mood:
+            Current emotional state used to bias retrieval.
+        llm_name:
+            Name of the LLM backend to use.
+
+        Returns
+        -------
+        str
+            The generated thought.
+        """
         prompt = self._select_prompt()
         cue = build_cue(prompt, state={"mood": mood})
         retriever = Retriever(
@@ -60,12 +80,27 @@ class ThinkingEngine:
 
     def run(
         self,
-        manager,
+        manager: "MemoryManager",
         *,
         interval: float = 60.0,
         llm_name: str = "local",
     ) -> Scheduler:
-        """Return scheduler that periodically triggers ``think_once``."""
+        """Start periodic background thinking.
+
+        Parameters
+        ----------
+        manager:
+            Memory manager containing episodic entries.
+        interval:
+            Seconds between each introspection.
+        llm_name:
+            Name of the LLM backend to use.
+
+        Returns
+        -------
+        Scheduler
+            Scheduler instance running the thinking task.
+        """
 
         scheduler = Scheduler()
         manager._next_think_time = time.monotonic() + interval
