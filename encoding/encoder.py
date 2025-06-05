@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from typing import List, Sequence
+from typing import List
 
 _TOKEN_RE = re.compile(r"\w+")
 
@@ -48,6 +48,6 @@ def encode_text(text: str, model_name: str | None = None) -> List[str] | List[fl
 
     model = _load_model()
     if model is not None:
-        vec: Sequence[float] = model.encode(text)
-        return list(vec)
+        vec = model.encode(text)
+        return [float(x) for x in vec]
     return _TOKEN_RE.findall(text.lower())
