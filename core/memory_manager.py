@@ -14,6 +14,7 @@ from core.working_memory import WorkingMemory
 from reconstruction.reconstructor import _load_config
 from dreaming.dream_engine import DreamEngine
 from ms_utils.scheduler import Scheduler
+import time
 from storage.db_interface import Database
 
 
@@ -137,6 +138,8 @@ class MemoryManager:
             summary_size=summary_size,
             max_entries=max_entries,
         )
+        self._dream_interval = interval
+        self._next_dream_time = time.monotonic() + interval
         return self._dream_scheduler
 
     def stop_dreaming(self) -> None:
@@ -144,3 +147,11 @@ class MemoryManager:
         sched = getattr(self, "_dream_scheduler", None)
         if isinstance(sched, Scheduler):
             sched.stop()
+        self._next_dream_time = None
+
+    def time_until_dream(self) -> float | None:
+        """Return seconds until the next scheduled dream or ``None``."""
+        next_time = getattr(self, "_next_dream_time", None)
+        if next_time is None:
+            return None
+        return max(0.0, next_time - time.monotonic())
