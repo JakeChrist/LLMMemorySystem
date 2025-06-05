@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import (
     QPushButton, QLabel, QListWidget, QScrollArea, QListWidgetItem,
     QSplitter, QFrame, QSizePolicy, QDialog
 )
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 import sys
 
 from ms_utils import format_context
@@ -89,6 +89,13 @@ class MemorySystemGUI(QWidget):
         super().__init__()
         self.agent = agent
         self.init_ui()
+        # Periodically refresh state panels so that background dreaming
+        # results appear even without user interaction.
+        self._timer = QTimer(self)
+        self._timer.setInterval(2000)
+        self._timer.timeout.connect(self.refresh_state)
+        self._timer.start()
+        self.refresh_state()
 
     def init_ui(self):
         self.setWindowTitle("LLMemory Agent Interface")
@@ -165,6 +172,22 @@ class MemorySystemGUI(QWidget):
             return
         dlg = MemoryBrowser(self.agent.memory)
         dlg.exec()
+
+    def refresh_state(self) -> None:
+        """Refresh working memory, mood and dream panels."""
+        if not self.agent:
+            return
+        working = self.agent.working_memory()
+        dream_entries = [
+            m.content
+            for m in self.agent.memory.all()
+            if m.content.startswith("Dream:")
+        ]
+        dreaming = dream_entries[-1] if dream_entries else ""
+        mem_text = format_context(working)
+        self.memory_box.setPlainText(mem_text)
+        self.mood_box.setPlainText(self.agent.mood)
+        self.dream_box.setPlainText(dreaming)
 
     def handle_submit(self):
         user_input = self.input_box.toPlainText().strip()
