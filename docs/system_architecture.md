@@ -36,9 +36,10 @@ response using a pluggable LLM backend. The main subsystems are shown below.
    - **procedural**: skills or instructions.
    The manager persists entries via ``Database`` and exposes helpers for
    adding, deleting and updating all types.
+   Each ``MemoryEntry`` stores detected emotion labels with an intensity score. Labels map to canonical categories: angry, disgust, embarrassed, fear, happy, love, neutral, pleasure, sad and surprise.
 3. **Retriever** – given a cue from ``cue_builder`` and optional mood or tags,
    ranks episodic, semantic and procedural memories using embeddings and
-   recency weighting.
+   recency weighting. Memories with high scores for the current mood are ranked higher.
 4. **Reconstructor** – merges retrieved memories into a context window for the
    next prompt.
 5. **DreamEngine** – background summarization. It periodically summarizes

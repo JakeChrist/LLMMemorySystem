@@ -73,3 +73,32 @@ Unit tests are located in the `tests/` directory and can be executed with:
 ```
 pytest
 ```
+
+## Emotions & Mood
+
+Memories record the emotion labels detected in the text along with an intensity score for each label. These labels are normalised to one of the following categories:
+
+- angry
+- disgust
+- embarrassed
+- fear
+- happy
+- love
+- neutral
+- pleasure
+- sad
+- surprise
+
+The intensity scores are stored in `MemoryEntry.emotion_scores` and used by the `Retriever`. When the agent's current `mood` matches a stored emotion, that memory receives a boost in ranking.
+
+Example:
+```python
+from core.memory_entry import MemoryEntry
+from retrieval.retriever import Retriever
+
+m1 = MemoryEntry(content="lost my toy", embedding=["a"], emotions=["sad"], emotion_scores={"sad": 0.9})
+m2 = MemoryEntry(content="found a toy", embedding=["a"], emotions=["happy"], emotion_scores={"happy": 0.8})
+retriever = Retriever([m1, m2])
+top = retriever.query("toy", mood="sad")[0]
+print(top.content)  # -> "lost my toy"
+```
