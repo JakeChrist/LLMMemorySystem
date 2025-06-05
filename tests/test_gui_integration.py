@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import pytest
 
 PyQt5 = pytest.importorskip("PyQt5")
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QLabel
 
 from gui.qt_interface import MemorySystemGUI, MemoryBrowser
 from core.memory_entry import MemoryEntry
@@ -40,7 +40,8 @@ def test_gui_handle_submit_updates_panels():
             assert q_kwargs.get("tags") == ["greeting"]
 
     assert mock_agent.receive.called
-    assert gui.response_list.item(0).text() == "reply"
+    bubbles = gui.chat_widget.findChildren(QLabel)
+    assert bubbles[-1].text() == "reply"
     assert "fact1" in gui.memory_box.toPlainText()
     assert "happy" in gui.mood_box.toPlainText()
     assert "Dream:" in gui.dream_box.toPlainText()

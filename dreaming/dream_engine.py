@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Iterable, TYPE_CHECKING
 
 from ms_utils import format_context, Scheduler
+import time
 from llm import llm_router
 from ms_utils.logger import Logger
 
@@ -25,6 +26,7 @@ class DreamEngine:
         *,
         llm_name: str = "local",
         semantic: SemanticMemory | None = None,
+        log: bool = False,
     ) -> str:
         """Return a concise dream summary using the configured LLM.
 
@@ -36,6 +38,8 @@ class DreamEngine:
             Identifier of the LLM backend to use.
         semantic:
             Optional semantic memory store to persist the summary.
+        log:
+            If ``True``, log the produced summary using :class:`ms_utils.logger.Logger`.
         """
 
         lines = [m.content for m in memories]
@@ -48,7 +52,8 @@ class DreamEngine:
         summary = "Dream: " + summary
         if semantic is not None:
             semantic.add(summary)
-        logger.info(summary)
+        if log:
+            logger.info(summary)
         return summary
 
     def run(
@@ -76,6 +81,7 @@ class DreamEngine:
         """
 
         scheduler = Scheduler()
+        manager._next_dream_time = time.monotonic() + interval
 
         def _task() -> None:
             recent = manager.all()[-summary_size:]
@@ -84,9 +90,11 @@ class DreamEngine:
                     recent,
                     llm_name=llm_name,
                     semantic=manager.semantic if store_semantic else None,
+                    log=False,
                 )
                 manager.add(summary)
             manager.prune(max_entries)
+            manager._next_dream_time = time.monotonic() + interval
 
         scheduler.schedule(interval, _task)
         return scheduler
