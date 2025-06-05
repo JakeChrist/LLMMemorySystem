@@ -58,7 +58,7 @@ class Retriever:
             return dot / (norm_a * norm_b)
         return 0.0
 
-    def query(self, text: str, top_k: int = 5) -> List[MemoryEntry]:
+    def query(self, text: str, top_k: int = 5, *, mood: str | None = None) -> List[MemoryEntry]:
         embedding = encode_text(text)
         now = datetime.utcnow()
 
@@ -68,14 +68,27 @@ class Retriever:
             and isinstance(embedding[0], (float, int))
         ):
             idxs = self._index.query(embedding, top_k)
-            return [self._memories[i] for i in idxs]
+            results = [self._memories[i] for i in idxs]
+            if mood:
+                scored = []
+                for i in idxs:
+                    memory = self._memories[i]
+                    vec = self._dense_vectors[i]
+                    sim = self._cosine_dense(embedding, vec)
+                    recency = 1 / ((now - memory.timestamp).total_seconds() + 1)
+                    boost = 0.1 if mood in memory.emotions else 0.0
+                    scored.append((sim + 0.1 * recency + boost, memory))
+                scored.sort(key=lambda item: item[0], reverse=True)
+                results = [m for _, m in scored]
+            return results[:top_k]
 
         if self._dense_vectors and embedding and isinstance(embedding[0], (float, int)):
             scored = []
             for memory, vec in zip(self._memories, self._dense_vectors):
                 sim = self._cosine_dense(embedding, vec)
                 recency = 1 / ((now - memory.timestamp).total_seconds() + 1)
-                scored.append((sim + 0.1 * recency, memory))
+                boost = 0.1 if mood and mood in memory.emotions else 0.0
+                scored.append((sim + 0.1 * recency + boost, memory))
             scored.sort(key=lambda item: item[0], reverse=True)
             return [m for _, m in scored[:top_k]]
 
@@ -89,6 +102,7 @@ class Retriever:
         for memory, vec in zip(self._memories, self._vectors):
             sim = self._cosine(q_vec, vec)
             recency = 1 / ((now - memory.timestamp).total_seconds() + 1)
-            scored.append((sim + 0.1 * recency, memory))
+            boost = 0.1 if mood and mood in memory.emotions else 0.0
+            scored.append((sim + 0.1 * recency + boost, memory))
         scored.sort(key=lambda item: item[0], reverse=True)
         return [m for _, m in scored[:top_k]]
