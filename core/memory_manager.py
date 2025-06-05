@@ -13,6 +13,7 @@ from core.memory_types.procedural import ProceduralMemory
 from core.working_memory import WorkingMemory
 from reconstruction.reconstructor import _load_config
 from dreaming.dream_engine import DreamEngine
+from thinking.thinking_engine import ThinkingEngine
 from ms_utils.scheduler import Scheduler
 import time
 from storage.db_interface import Database
@@ -186,6 +187,38 @@ class MemoryManager:
     def time_until_dream(self) -> float | None:
         """Return seconds until the next scheduled dream or ``None``."""
         next_time = getattr(self, "_next_dream_time", None)
+        if next_time is None:
+            return None
+        return max(0.0, next_time - time.monotonic())
+
+    def start_thinking(
+        self,
+        *,
+        interval: float = 60.0,
+        llm_name: str = "local",
+    ) -> Scheduler:
+        """Start periodic introspective thinking via :class:`ThinkingEngine`."""
+
+        engine = ThinkingEngine()
+        self._think_scheduler = engine.run(
+            self,
+            interval=interval,
+            llm_name=llm_name,
+        )
+        self._think_interval = interval
+        self._next_think_time = time.monotonic() + interval
+        return self._think_scheduler
+
+    def stop_thinking(self) -> None:
+        """Stop the background thinking scheduler if running."""
+        sched = getattr(self, "_think_scheduler", None)
+        if isinstance(sched, Scheduler):
+            sched.stop()
+        self._next_think_time = None
+
+    def time_until_think(self) -> float | None:
+        """Return seconds until the next scheduled thought or ``None``."""
+        next_time = getattr(self, "_next_think_time", None)
         if next_time is None:
             return None
         return max(0.0, next_time - time.monotonic())
