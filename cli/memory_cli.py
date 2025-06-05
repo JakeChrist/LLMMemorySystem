@@ -14,6 +14,7 @@ from core.memory_entry import MemoryEntry
 from encoding.encoder import encode_text, set_model_name
 from encoding.tagging import tag_text
 from dreaming.dream_engine import DreamEngine
+from core.memory_manager import MemoryManager
 from retrieval.retriever import Retriever
 from storage.db_interface import Database
 
@@ -229,6 +230,18 @@ def delete_proc(db: Database, timestamp: str, *, assume_yes: bool = False) -> No
     logger.info("Procedural memory deleted.")
 
 
+def start_dream(manager: MemoryManager, *, interval: float = 60.0) -> None:
+    """Begin periodic dreaming using ``MemoryManager``."""
+    manager.start_dreaming(interval=interval)
+    logger.info("Dreaming started.")
+
+
+def stop_dream(manager: MemoryManager) -> None:
+    """Stop any active dreaming scheduler."""
+    manager.stop_dreaming()
+    logger.info("Dreaming stopped.")
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         description="Memory management CLI for stored agent memories"
@@ -267,6 +280,17 @@ def main(argv: list[str] | None = None) -> None:
     sub.add_parser("reset", help="Delete all memories")
 
     sub.add_parser("dream", help="Generate dream summary")
+    start_p = sub.add_parser(
+        "start-dream",
+        help="Start periodic dreaming (background summarization)",
+    )
+    start_p.add_argument(
+        "--interval",
+        type=float,
+        default=60.0,
+        help="Seconds between dream summaries",
+    )
+    sub.add_parser("stop-dream", help="Stop periodic dreaming")
 
     edit_p = sub.add_parser("edit", help="Edit a memory entry")
     edit_p.add_argument("timestamp", help="Timestamp of memory to edit")
@@ -315,6 +339,12 @@ def main(argv: list[str] | None = None) -> None:
         query_memories(db, args.text, top_k=args.top_k, model=args.model)
     elif args.cmd == "dream":
         dream_summary(db)
+    elif args.cmd == "start-dream":
+        manager = MemoryManager(args.db)
+        start_dream(manager, interval=args.interval)
+    elif args.cmd == "stop-dream":
+        manager = MemoryManager(args.db)
+        stop_dream(manager)
     elif args.cmd == "reset":
         reset_database(db)
     elif args.cmd == "edit":

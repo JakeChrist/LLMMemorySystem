@@ -111,3 +111,11 @@ def test_semantic_and_procedural_cli(tmp_path, capsys, monkeypatch):
     out = capsys.readouterr().out
     assert "Procedural memory deleted." in out
     assert db.load_all_procedural() == []
+
+
+def test_start_and_stop_dreaming():
+    manager = MagicMock()
+    memory_cli.start_dream(manager, interval=5)
+    manager.start_dreaming.assert_called_once_with(interval=5)
+    memory_cli.stop_dream(manager)
+    manager.stop_dreaming.assert_called_once()
