@@ -115,6 +115,116 @@ def delete_memory(db: Database, timestamp: str, *, assume_yes: bool = False) -> 
     print("Memory deleted.")
 
 
+def list_sem(db: Database) -> None:
+    """List all semantic memories."""
+    memories = db.load_all_semantic()
+    for i, mem in enumerate(memories, 1):
+        ts = mem.timestamp.isoformat()
+        print(f"{i}. {ts} - {mem.content}")
+
+
+def add_sem(db: Database, text: str) -> None:
+    """Add a semantic memory entry."""
+    entry = MemoryEntry(content=text, embedding=encode_text(text), emotions=[], metadata={})
+    db.save_semantic(entry)
+    print("Semantic memory added.")
+
+
+def edit_sem(db: Database, timestamp: str, text: str, *, assume_yes: bool = False) -> None:
+    """Edit a semantic memory entry by timestamp."""
+    ts = datetime.fromisoformat(timestamp)
+    entries = [m for m in db.load_all_semantic() if m.timestamp.isoformat() == timestamp]
+    if not entries:
+        print("Entry not found.")
+        return
+    if not assume_yes:
+        ans = input(f"Edit semantic memory at {timestamp}? [y/N] ").strip().lower()
+        if ans not in {"y", "yes"}:
+            print("Aborted.")
+            return
+    existing = entries[0]
+    updated = MemoryEntry(
+        content=text,
+        embedding=encode_text(text),
+        timestamp=ts,
+        emotions=existing.emotions,
+        metadata=existing.metadata,
+    )
+    db.update_semantic(ts, updated)
+    print("Semantic memory updated.")
+
+
+def delete_sem(db: Database, timestamp: str, *, assume_yes: bool = False) -> None:
+    """Delete a semantic memory entry by timestamp."""
+    ts = datetime.fromisoformat(timestamp)
+    entries = [m for m in db.load_all_semantic() if m.timestamp.isoformat() == timestamp]
+    if not entries:
+        print("Entry not found.")
+        return
+    if not assume_yes:
+        ans = input(f"Delete semantic memory at {timestamp}? [y/N] ").strip().lower()
+        if ans not in {"y", "yes"}:
+            print("Aborted.")
+            return
+    db.delete_semantic(ts)
+    print("Semantic memory deleted.")
+
+
+def list_proc(db: Database) -> None:
+    """List all procedural memories."""
+    memories = db.load_all_procedural()
+    for i, mem in enumerate(memories, 1):
+        ts = mem.timestamp.isoformat()
+        print(f"{i}. {ts} - {mem.content}")
+
+
+def add_proc(db: Database, text: str) -> None:
+    """Add a procedural memory entry."""
+    entry = MemoryEntry(content=text, embedding=encode_text(text), emotions=[], metadata={})
+    db.save_procedural(entry)
+    print("Procedural memory added.")
+
+
+def edit_proc(db: Database, timestamp: str, text: str, *, assume_yes: bool = False) -> None:
+    """Edit a procedural memory entry by timestamp."""
+    ts = datetime.fromisoformat(timestamp)
+    entries = [m for m in db.load_all_procedural() if m.timestamp.isoformat() == timestamp]
+    if not entries:
+        print("Entry not found.")
+        return
+    if not assume_yes:
+        ans = input(f"Edit procedural memory at {timestamp}? [y/N] ").strip().lower()
+        if ans not in {"y", "yes"}:
+            print("Aborted.")
+            return
+    existing = entries[0]
+    updated = MemoryEntry(
+        content=text,
+        embedding=encode_text(text),
+        timestamp=ts,
+        emotions=existing.emotions,
+        metadata=existing.metadata,
+    )
+    db.update_procedural(ts, updated)
+    print("Procedural memory updated.")
+
+
+def delete_proc(db: Database, timestamp: str, *, assume_yes: bool = False) -> None:
+    """Delete a procedural memory entry by timestamp."""
+    ts = datetime.fromisoformat(timestamp)
+    entries = [m for m in db.load_all_procedural() if m.timestamp.isoformat() == timestamp]
+    if not entries:
+        print("Entry not found.")
+        return
+    if not assume_yes:
+        ans = input(f"Delete procedural memory at {timestamp}? [y/N] ").strip().lower()
+        if ans not in {"y", "yes"}:
+            print("Aborted.")
+            return
+    db.delete_procedural(ts)
+    print("Procedural memory deleted.")
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         description="Memory management CLI for stored agent memories"
@@ -161,6 +271,34 @@ def main(argv: list[str] | None = None) -> None:
     del_p = sub.add_parser("delete", help="Delete a memory entry")
     del_p.add_argument("timestamp", help="Timestamp of memory to delete")
 
+    sub.add_parser("list-sem", help="List semantic memories")
+    add_sem_p = sub.add_parser("add-sem", help="Add a semantic memory")
+    add_sem_p.add_argument("text", help="Semantic memory text")
+    edit_sem_p = sub.add_parser(
+        "edit-sem", help="Edit a semantic memory entry"
+    )
+    edit_sem_p.add_argument("timestamp", help="Timestamp of semantic memory to edit")
+    edit_sem_p.add_argument("text", help="New memory text")
+    del_sem_p = sub.add_parser(
+        "delete-sem", help="Delete a semantic memory entry"
+    )
+    del_sem_p.add_argument("timestamp", help="Timestamp of semantic memory to delete")
+
+    sub.add_parser("list-proc", help="List procedural memories")
+    add_proc_p = sub.add_parser("add-proc", help="Add a procedural memory")
+    add_proc_p.add_argument("text", help="Procedural memory text")
+    edit_proc_p = sub.add_parser(
+        "edit-proc", help="Edit a procedural memory entry"
+    )
+    edit_proc_p.add_argument("timestamp", help="Timestamp of procedural memory to edit")
+    edit_proc_p.add_argument("text", help="New memory text")
+    del_proc_p = sub.add_parser(
+        "delete-proc", help="Delete a procedural memory entry"
+    )
+    del_proc_p.add_argument(
+        "timestamp", help="Timestamp of procedural memory to delete"
+    )
+
     args = parser.parse_args(argv)
 
     db = Database(args.db)
@@ -179,6 +317,22 @@ def main(argv: list[str] | None = None) -> None:
         edit_memory(db, args.timestamp, args.text)
     elif args.cmd == "delete":
         delete_memory(db, args.timestamp)
+    elif args.cmd == "list-sem":
+        list_sem(db)
+    elif args.cmd == "add-sem":
+        add_sem(db, args.text)
+    elif args.cmd == "edit-sem":
+        edit_sem(db, args.timestamp, args.text)
+    elif args.cmd == "delete-sem":
+        delete_sem(db, args.timestamp)
+    elif args.cmd == "list-proc":
+        list_proc(db)
+    elif args.cmd == "add-proc":
+        add_proc(db, args.text)
+    elif args.cmd == "edit-proc":
+        edit_proc(db, args.timestamp, args.text)
+    elif args.cmd == "delete-proc":
+        delete_proc(db, args.timestamp)
 
 
 if __name__ == "__main__":

@@ -71,3 +71,43 @@ def test_edit_and_delete(tmp_path, capsys, monkeypatch):
     out = capsys.readouterr().out
     assert "Memory deleted." in out
     assert db.load_all() == []
+
+
+def test_semantic_and_procedural_cli(tmp_path, capsys, monkeypatch):
+    db = Database(tmp_path / "mem.db")
+
+    memory_cli.add_sem(db, "Earth is round")
+    memory_cli.list_sem(db)
+    out = capsys.readouterr().out
+    assert "Earth" in out
+    ts_sem = db.load_all_semantic()[0].timestamp.isoformat()
+
+    monkeypatch.setattr("builtins.input", lambda *a, **kw: "y")
+    memory_cli.edit_sem(db, ts_sem, "Earth orbits sun")
+    out = capsys.readouterr().out
+    assert "Semantic memory updated." in out
+    assert db.load_all_semantic()[0].content == "Earth orbits sun"
+
+    monkeypatch.setattr("builtins.input", lambda *a, **kw: "y")
+    memory_cli.delete_sem(db, ts_sem)
+    out = capsys.readouterr().out
+    assert "Semantic memory deleted." in out
+    assert db.load_all_semantic() == []
+
+    memory_cli.add_proc(db, "breathing")
+    memory_cli.list_proc(db)
+    out = capsys.readouterr().out
+    assert "breathing" in out
+    ts_proc = db.load_all_procedural()[0].timestamp.isoformat()
+
+    monkeypatch.setattr("builtins.input", lambda *a, **kw: "y")
+    memory_cli.edit_proc(db, ts_proc, "walking")
+    out = capsys.readouterr().out
+    assert "Procedural memory updated." in out
+    assert db.load_all_procedural()[0].content == "walking"
+
+    monkeypatch.setattr("builtins.input", lambda *a, **kw: "y")
+    memory_cli.delete_proc(db, ts_proc)
+    out = capsys.readouterr().out
+    assert "Procedural memory deleted." in out
+    assert db.load_all_procedural() == []
