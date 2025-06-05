@@ -291,6 +291,11 @@ def main(argv: list[str] | None = None) -> None:
         default="memory.db",
         help="Path to SQLite database",
     )
+    parser.add_argument(
+        "--llm",
+        default="local",
+        help="LLM backend to use",
+    )
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     sub.add_parser("list", help="List stored memories")
@@ -332,7 +337,8 @@ def main(argv: list[str] | None = None) -> None:
     )
     start_p.add_argument(
         "--llm",
-        default="local",
+        dest="dream_llm",
+        default=None,
         help="LLM backend to use for dreaming",
     )
     sub.add_parser("stop-dream", help="Stop periodic dreaming")
@@ -349,7 +355,8 @@ def main(argv: list[str] | None = None) -> None:
     )
     think_p.add_argument(
         "--llm",
-        default="local",
+        dest="think_llm",
+        default=None,
         help="LLM backend to use for thinking",
     )
     sub.add_parser("stop-think", help="Stop periodic thinking")
@@ -403,13 +410,15 @@ def main(argv: list[str] | None = None) -> None:
         dream_summary(db)
     elif args.cmd == "start-dream":
         manager = MemoryManager(args.db)
-        start_dream(manager, interval=args.interval, llm=args.llm)
+        llm_backend = args.dream_llm or args.llm
+        start_dream(manager, interval=args.interval, llm=llm_backend)
     elif args.cmd == "stop-dream":
         manager = MemoryManager(args.db)
         stop_dream(manager)
     elif args.cmd == "start-think":
         manager = MemoryManager(args.db)
-        start_think(manager, interval=args.interval, llm_name=args.llm)
+        llm_backend = args.think_llm or args.llm
+        start_think(manager, interval=args.interval, llm_name=llm_backend)
     elif args.cmd == "stop-think":
         manager = MemoryManager(args.db)
         stop_think(manager)

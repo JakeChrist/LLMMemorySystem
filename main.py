@@ -52,7 +52,7 @@ def main(argv: list[str] | None = None) -> None:
     if args.mode == "cli":
         from cli.memory_cli import main as cli_main
 
-        cli_main(["--db", args.db, *remaining])
+        cli_main(["--db", args.db, "--llm", args.llm, *remaining])
     elif args.mode == "gui":
         from gui.qt_interface import run_gui
 

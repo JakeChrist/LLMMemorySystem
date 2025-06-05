@@ -95,3 +95,14 @@ python main.py gui --llm openai
 python main.py cli --llm gemini list
 ```
 
+When invoking the memory CLI directly you can set the backend once and reuse it
+for subcommands. Individual commands may still override it:
+
+```bash
+python -m cli.memory_cli --llm openai list
+python -m cli.memory_cli --llm openai start-dream --llm local
+```
+
+The second command uses the OpenAI backend globally but falls back to the local
+model just for dreaming.
+
