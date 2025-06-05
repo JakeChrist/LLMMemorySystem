@@ -1,5 +1,9 @@
 import argparse
 
+from ms_utils.logger import Logger
+
+logger = Logger(__name__)
+
 
 def run_repl(llm_name: str, db_path: str) -> None:
     """Run a simple interactive REPL using ``core.agent.Agent``."""
@@ -19,7 +23,7 @@ def run_repl(llm_name: str, db_path: str) -> None:
             if text.lower() in {"exit", "quit"}:
                 break
             response = agent.receive(text)
-            print(response)
+            logger.info(response)
     except KeyboardInterrupt:
         print()
 
