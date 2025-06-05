@@ -9,9 +9,10 @@ from llm.local_llm import LocalLLM
 from llm.openai_api import OpenAIBackend
 from llm.claude_api import ClaudeBackend
 from llm.gemini_api import GeminiBackend
+from llm.lmstudio_api import LMStudioBackend
 
 
-def get_llm(name: Literal["local", "openai", "claude", "gemini"] = "local") -> BaseLLM:
+def get_llm(name: Literal["local", "openai", "claude", "gemini", "lmstudio"] = "local") -> BaseLLM:
     if name == "local":
         return LocalLLM()
     if name == "openai":
@@ -20,4 +21,6 @@ def get_llm(name: Literal["local", "openai", "claude", "gemini"] = "local") -> B
         return ClaudeBackend()
     if name == "gemini":
         return GeminiBackend()
+    if name == "lmstudio":
+        return LMStudioBackend()
     raise ValueError(f"Unknown LLM: {name}")

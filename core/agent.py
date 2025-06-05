@@ -17,6 +17,7 @@ class Agent:
     """Minimal conversational agent."""
 
     def __init__(self, llm_name: str = "local", db_path: str | None = None) -> None:
+        self.llm_name = llm_name
         self.memory = MemoryManager(db_path=db_path or "memory.db")
         self.llm = llm_router.get_llm(llm_name)
         self.mood = "neutral"

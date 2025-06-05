@@ -66,3 +66,52 @@ def test_memory_browser_edit_refreshes_tags(tmp_path):
     assert manager.working.contents()[0].metadata.get("tags") == ["animal"]
 
     app.quit()
+
+
+def test_update_countdown_refreshes_dream_box():
+    app = QApplication.instance() or QApplication([])
+
+    entries = [
+        MemoryEntry(content="Dream: first", embedding=[], timestamp=datetime.utcnow())
+    ]
+
+    mock_agent = MagicMock()
+    mock_agent.memory.all.return_value = entries
+    mock_agent.memory.time_until_dream.return_value = 10
+
+    gui = MemorySystemGUI(mock_agent)
+
+    # Simulate new dream added to memory
+    entries.append(MemoryEntry(content="Dream: second", embedding=[], timestamp=datetime.utcnow()))
+
+    gui.update_countdown()
+
+    assert "Dream: second" in gui.dream_box.toPlainText()
+    assert gui.countdown_label.text() == "10s"
+    assert gui._last_dream is entries[-1]
+
+    app.quit()
+
+
+def test_update_countdown_detects_duplicate_dream():
+    app = QApplication.instance() or QApplication([])
+
+    entry1 = MemoryEntry(content="Dream: repeat", embedding=[], timestamp=datetime.utcnow())
+    entries = [entry1]
+
+    mock_agent = MagicMock()
+    mock_agent.memory.all.return_value = entries
+    mock_agent.memory.time_until_dream.return_value = 5
+
+    gui = MemorySystemGUI(mock_agent)
+    assert gui._last_dream is entry1
+
+    # New dream with identical content but distinct timestamp
+    entry2 = MemoryEntry(content="Dream: repeat", embedding=[], timestamp=datetime.utcnow())
+    entries.append(entry2)
+
+    gui.update_countdown()
+
+    assert gui._last_dream is entry2
+
+    app.quit()

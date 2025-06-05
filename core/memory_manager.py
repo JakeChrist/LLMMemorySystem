@@ -160,6 +160,7 @@ class MemoryManager:
         interval: float = 60.0,
         summary_size: int = 5,
         max_entries: int = 100,
+        llm_name: str = "local",
     ) -> Scheduler:
         """Start background dreaming with the :class:`DreamEngine`."""
 
@@ -169,6 +170,7 @@ class MemoryManager:
             interval=interval,
             summary_size=summary_size,
             max_entries=max_entries,
+            llm_name=llm_name,
         )
         self._dream_interval = interval
         self._next_dream_time = time.monotonic() + interval

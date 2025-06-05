@@ -61,7 +61,7 @@ def main(argv: list[str] | None = None) -> None:
         agent = Agent(args.llm, db_path=args.db)
         # Start background dreaming when launching the GUI so that summaries
         # accumulate automatically while the interface is open.
-        scheduler = agent.memory.start_dreaming()
+        scheduler = agent.memory.start_dreaming(llm_name=agent.llm_name)
         try:
             run_gui(agent)
         finally:

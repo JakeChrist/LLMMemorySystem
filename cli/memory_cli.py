@@ -241,9 +241,9 @@ def delete_proc(db: Database, timestamp: str, *, assume_yes: bool = False) -> No
     logger.info("Procedural memory deleted.")
 
 
-def start_dream(manager: MemoryManager, *, interval: float = 60.0) -> None:
+def start_dream(manager: MemoryManager, *, interval: float = 60.0, llm: str = "local") -> None:
     """Begin periodic dreaming using ``MemoryManager`` and block until interrupted."""
-    scheduler = manager.start_dreaming(interval=interval)
+    scheduler = manager.start_dreaming(interval=interval, llm_name=llm)
     logger.info("Dreaming started. Press Ctrl+C to stop.")
     try:
         while True:
@@ -307,6 +307,11 @@ def main(argv: list[str] | None = None) -> None:
         default=60.0,
         help="Seconds between dream summaries",
     )
+    start_p.add_argument(
+        "--llm",
+        default="local",
+        help="LLM backend to use for dreaming",
+    )
     sub.add_parser("stop-dream", help="Stop periodic dreaming")
 
     edit_p = sub.add_parser("edit", help="Edit a memory entry")
@@ -358,7 +363,7 @@ def main(argv: list[str] | None = None) -> None:
         dream_summary(db)
     elif args.cmd == "start-dream":
         manager = MemoryManager(args.db)
-        start_dream(manager, interval=args.interval)
+        start_dream(manager, interval=args.interval, llm=args.llm)
     elif args.cmd == "stop-dream":
         manager = MemoryManager(args.db)
         stop_dream(manager)
