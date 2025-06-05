@@ -46,9 +46,11 @@ def query_memories(
 ) -> None:
     """Query stored memories using vector similarity."""
     memories = db.load_all()
+    sem = db.load_all_semantic()
+    proc = db.load_all_procedural()
     if model is not None:
         set_model_name(model)
-    retriever = Retriever(memories)
+    retriever = Retriever(memories, semantic=sem, procedural=proc)
     results = retriever.query(text, top_k=top_k)
     for mem in results:
         logger.info(f"{mem.timestamp.isoformat()} - {mem.content}")

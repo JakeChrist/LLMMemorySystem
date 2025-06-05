@@ -188,7 +188,11 @@ class MemorySystemGUI(QWidget):
 
             tags = tag_text(user_input)
             cue = build_cue(user_input, tags=tags, state={"mood": self.agent.mood})
-            retriever = Retriever(self.agent.memory.all())
+            retriever = Retriever(
+                self.agent.memory.all(),
+                semantic=self.agent.memory.semantic.all(),
+                procedural=self.agent.memory.procedural.all(),
+            )
             retrieved = retriever.query(cue, top_k=5, mood=self.agent.mood, tags=tags)
             context = [m.content for m in retrieved]
             working = self.agent.working_memory()

@@ -17,8 +17,29 @@ except Exception:  # pragma: no cover - faiss may not be available
 class Retriever:
     """In-memory retriever using cosine similarity and recency bias."""
 
-    def __init__(self, memories: Iterable[MemoryEntry]):
-        self._memories = list(memories)
+    def __init__(
+        self,
+        episodic: Iterable[MemoryEntry],
+        *,
+        semantic: Iterable[MemoryEntry] | None = None,
+        procedural: Iterable[MemoryEntry] | None = None,
+        sem_recency: float = 0.02,
+        proc_recency: float = 0.02,
+    ) -> None:
+        epis = list(episodic)
+        sem = list(semantic or [])
+        proc = list(procedural or [])
+
+        self._memories = epis + sem + proc
+        self._types: List[str] = ["episodic"] * len(epis) + ["semantic"] * len(sem) + [
+            "procedural"
+        ] * len(proc)
+        self._recency_weights = {
+            "episodic": 0.1,
+            "semantic": sem_recency,
+            "procedural": proc_recency,
+        }
+
         self._tags: List[set[str]] = [set(m.metadata.get("tags", [])) for m in self._memories]
         self._index = None
         self._dense_vectors: List[List[float]] = []
@@ -85,11 +106,12 @@ class Retriever:
                     vec = self._dense_vectors[i]
                     sim = self._cosine_dense(embedding, vec)
                     recency = 1 / ((now - memory.timestamp).total_seconds() + 1)
+                    weight = self._recency_weights[self._types[i]]
                     boost = 0.1 if mood in memory.emotions else 0.0
                     tag_score = (
                         len(q_tags & self._tags[i]) / len(q_tags) if q_tags else 0.0
                     )
-                    scored.append((sim + tag_score + 0.1 * recency + boost, memory))
+                    scored.append((sim + tag_score + weight * recency + boost, memory))
                 scored.sort(key=lambda item: item[0], reverse=True)
                 results = [m for _, m in scored]
             return results[:top_k]
@@ -99,11 +121,12 @@ class Retriever:
             for i, (memory, vec) in enumerate(zip(self._memories, self._dense_vectors)):
                 sim = self._cosine_dense(embedding, vec)
                 recency = 1 / ((now - memory.timestamp).total_seconds() + 1)
+                weight = self._recency_weights[self._types[i]]
                 boost = 0.1 if mood and mood in memory.emotions else 0.0
                 tag_score = (
                     len(q_tags & self._tags[i]) / len(q_tags) if q_tags else 0.0
                 )
-                scored.append((sim + tag_score + 0.1 * recency + boost, memory))
+                scored.append((sim + tag_score + weight * recency + boost, memory))
             scored.sort(key=lambda item: item[0], reverse=True)
             return [m for _, m in scored[:top_k]]
 
@@ -117,10 +140,11 @@ class Retriever:
         for i, (memory, vec) in enumerate(zip(self._memories, self._vectors)):
             sim = self._cosine(q_vec, vec)
             recency = 1 / ((now - memory.timestamp).total_seconds() + 1)
+            weight = self._recency_weights[self._types[i]]
             boost = 0.1 if mood and mood in memory.emotions else 0.0
             tag_score = (
                 len(q_tags & self._tags[i]) / len(q_tags) if q_tags else 0.0
             )
-            scored.append((sim + tag_score + 0.1 * recency + boost, memory))
+            scored.append((sim + tag_score + weight * recency + boost, memory))
         scored.sort(key=lambda item: item[0], reverse=True)
         return [m for _, m in scored[:top_k]]
