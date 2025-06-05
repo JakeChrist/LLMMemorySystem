@@ -7,6 +7,7 @@ import argparse
 from core.emotion_model import analyze_emotions
 from core.memory_entry import MemoryEntry
 from encoding.encoder import encode_text, set_model_name
+from encoding.tagging import tag_text
 from dreaming.dream_engine import DreamEngine
 from retrieval.retriever import Retriever
 from storage.db_interface import Database
@@ -23,11 +24,12 @@ def list_memories(db: Database) -> None:
 def add_memory(db: Database, text: str, model: str | None = None) -> None:
     """Add a new memory entry to the database."""
     emotions = analyze_emotions(text)
+    tags = tag_text(text)
     entry = MemoryEntry(
         content=text,
         embedding=encode_text(text, model_name=model),
         emotions=emotions,
-        metadata={},
+        metadata={"tags": tags},
     )
     db.save(entry)
     print("Memory added.")

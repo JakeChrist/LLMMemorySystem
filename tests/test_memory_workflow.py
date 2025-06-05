@@ -10,7 +10,8 @@ from reconstruction.reconstructor import Reconstructor
 
 def test_memory_add_and_retrieve():
     manager = MemoryManager(db_path=":memory:")
-    manager.add("the cat sat on the mat")
+    entry = manager.add("the cat sat on the mat")
+    assert entry.metadata.get("tags") == ["animal"]
     manager.add("dogs are wonderful companions")
 
     retriever = Retriever(manager.all())

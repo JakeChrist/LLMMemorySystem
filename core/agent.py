@@ -7,6 +7,7 @@ from typing import List
 from core.emotion_model import analyze_emotions
 from core.memory_manager import MemoryManager
 from retrieval.cue_builder import build_cue
+from encoding.tagging import tag_text
 from retrieval.retriever import Retriever
 from reconstruction.reconstructor import Reconstructor
 from llm import llm_router
@@ -32,7 +33,8 @@ class Agent:
 
         self.memory.add(text, emotions=emotions, metadata={"role": "user"})
 
-        cue = build_cue(text, state={"mood": self.mood})
+        tags = tag_text(text)
+        cue = build_cue(text, tags=tags, state={"mood": self.mood})
         retriever = Retriever(self.memory.all())
         retrieved = retriever.query(cue, top_k=5, mood=self.mood)
         reconstructor = Reconstructor()
