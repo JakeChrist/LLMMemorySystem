@@ -162,6 +162,8 @@ class MemorySystemGUI(QWidget):
         super().__init__()
         self.agent = agent
         self.scheduler = scheduler
+        if self.scheduler is not None and not hasattr(self.scheduler, "agent"):
+            self.scheduler.agent = self.agent
         self._last_dream = None
         self._last_think = None
         self.init_ui()
