@@ -66,3 +66,27 @@ def test_memory_browser_edit_refreshes_tags(tmp_path):
     assert manager.working.contents()[0].metadata.get("tags") == ["animal"]
 
     app.quit()
+
+
+def test_update_countdown_refreshes_dream_box():
+    app = QApplication.instance() or QApplication([])
+
+    entries = [
+        MemoryEntry(content="Dream: first", embedding=[], timestamp=datetime.utcnow())
+    ]
+
+    mock_agent = MagicMock()
+    mock_agent.memory.all.return_value = entries
+    mock_agent.memory.time_until_dream.return_value = 10
+
+    gui = MemorySystemGUI(mock_agent)
+
+    # Simulate new dream added to memory
+    entries.append(MemoryEntry(content="Dream: second", embedding=[], timestamp=datetime.utcnow()))
+
+    gui.update_countdown()
+
+    assert "Dream: second" in gui.dream_box.toPlainText()
+    assert gui.countdown_label.text() == "10s"
+
+    app.quit()
