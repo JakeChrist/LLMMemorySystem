@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Iterable, TYPE_CHECKING
 
 from ms_utils import format_context, Scheduler
+import time
 from llm import llm_router
 from ms_utils.logger import Logger
 
@@ -76,6 +77,7 @@ class DreamEngine:
         """
 
         scheduler = Scheduler()
+        manager._next_dream_time = time.monotonic() + interval
 
         def _task() -> None:
             recent = manager.all()[-summary_size:]
@@ -87,6 +89,7 @@ class DreamEngine:
                 )
                 manager.add(summary)
             manager.prune(max_entries)
+            manager._next_dream_time = time.monotonic() + interval
 
         scheduler.schedule(interval, _task)
         return scheduler

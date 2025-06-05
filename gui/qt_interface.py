@@ -1,9 +1,17 @@
 from PyQt5.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QTextEdit,
-    QPushButton, QLabel, QListWidget, QScrollArea, QListWidgetItem,
-    QSplitter, QFrame, QSizePolicy, QDialog
+    QApplication,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QTextEdit,
+    QPushButton,
+    QLabel,
+    QScrollArea,
+    QSplitter,
+    QSizePolicy,
+    QDialog,
 )
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 import sys
 
 from ms_utils import format_context
@@ -92,21 +100,17 @@ class MemorySystemGUI(QWidget):
 
     def init_ui(self):
         self.setWindowTitle("LLMemory Agent Interface")
-        self.resize(1200, 700)
+        self.resize(900, 600)
 
-        # Left Panel: User prompts
-        self.user_list = QListWidget()
-        self.user_list.setStyleSheet("background-color: #f7f7f7;")
-        left_panel = QVBoxLayout()
-        left_panel.addWidget(QLabel("User Prompts"))
-        left_panel.addWidget(self.user_list)
+        # Conversation area
+        self.chat_widget = QWidget()
+        self.chat_layout = QVBoxLayout()
+        self.chat_layout.addStretch()
+        self.chat_widget.setLayout(self.chat_layout)
 
-        # Middle Panel: LLM responses
-        self.response_list = QListWidget()
-        self.response_list.setStyleSheet("background-color: #ffffff;")
-        middle_panel = QVBoxLayout()
-        middle_panel.addWidget(QLabel("LLM Responses"))
-        middle_panel.addWidget(self.response_list)
+        self.chat_scroll = QScrollArea()
+        self.chat_scroll.setWidgetResizable(True)
+        self.chat_scroll.setWidget(self.chat_widget)
 
         # Right Panel: State debug panel
         right_panel = QVBoxLayout()
@@ -125,6 +129,10 @@ class MemorySystemGUI(QWidget):
         self.dream_box.setReadOnly(True)
         right_panel.addWidget(self.dream_box)
 
+        right_panel.addWidget(QLabel("Next Dream"))
+        self.countdown_label = QLabel("")
+        right_panel.addWidget(self.countdown_label)
+
         self.mem_button = QPushButton("Browse Memories")
         self.mem_button.clicked.connect(self.show_memories)
         right_panel.addWidget(self.mem_button)
@@ -140,25 +148,58 @@ class MemorySystemGUI(QWidget):
         input_layout.addWidget(self.submit_button)
 
         # Assemble into layout
-        left_widget = QWidget()
-        left_widget.setLayout(left_panel)
-        middle_widget = QWidget()
-        middle_widget.setLayout(middle_panel)
+        chat_container = QWidget()
+        chat_layout = QVBoxLayout()
+        chat_layout.addWidget(self.chat_scroll)
+        chat_container.setLayout(chat_layout)
+
         right_widget = QWidget()
         right_widget.setLayout(right_panel)
 
         splitter = QSplitter(Qt.Horizontal)
-        splitter.addWidget(left_widget)
-        splitter.addWidget(middle_widget)
+        splitter.addWidget(chat_container)
         splitter.addWidget(right_widget)
-        splitter.setSizes([400, 400, 400])
-        splitter.setStretchFactor(1, 1)
+        splitter.setStretchFactor(0, 1)
+        splitter.setStretchFactor(1, 0)
 
         main_column = QVBoxLayout()
         main_column.addWidget(splitter)
         main_column.addLayout(input_layout)
 
         self.setLayout(main_column)
+
+        # Timer to update dream countdown
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update_countdown)
+        self.timer.start(1000)
+
+    def scroll_to_bottom(self):
+        bar = self.chat_scroll.verticalScrollBar()
+        bar.setValue(bar.maximum())
+
+    def add_message(self, text: str, *, is_user: bool = True) -> None:
+        bubble = ChatBubble(text, is_user=is_user)
+        row = QHBoxLayout()
+        if is_user:
+            row.addStretch()
+            row.addWidget(bubble)
+        else:
+            row.addWidget(bubble)
+            row.addStretch()
+        container = QWidget()
+        container.setLayout(row)
+        self.chat_layout.insertWidget(self.chat_layout.count() - 1, container)
+        QTimer.singleShot(0, self.scroll_to_bottom)
+
+    def update_countdown(self) -> None:
+        if not self.agent:
+            self.countdown_label.setText("")
+            return
+        remaining = self.agent.memory.time_until_dream()
+        if remaining is None:
+            self.countdown_label.setText("")
+        else:
+            self.countdown_label.setText(f"{int(remaining)}s")
 
     def show_memories(self):
         if not self.agent:
@@ -172,9 +213,8 @@ class MemorySystemGUI(QWidget):
             return
         self.input_box.clear()
 
-        # Add user input to left panel
-        user_item = QListWidgetItem(user_input)
-        self.user_list.addItem(user_item)
+        # Add user message to chat
+        self.add_message(user_input, is_user=True)
 
         # Query the agent and update debug panels
         response = self.agent.receive(user_input) if self.agent else ""
@@ -207,9 +247,8 @@ class MemorySystemGUI(QWidget):
             mood = ""
             dreaming = ""
 
-        # Add response to middle panel
-        response_item = QListWidgetItem(response)
-        self.response_list.addItem(response_item)
+        # Add response bubble
+        self.add_message(response, is_user=False)
 
         # Update right panel
         mem_text = format_context(working)
