@@ -31,11 +31,12 @@ def list_memories(db: Database) -> None:
 def add_memory(db: Database, text: str, model: str | None = None) -> None:
     """Add a new memory entry to the database."""
     emotions = analyze_emotions(text)
+    labels = [e[0] for e in emotions]
     tags = tag_text(text)
     entry = MemoryEntry(
         content=text,
         embedding=encode_text(text, model_name=model),
-        emotions=emotions,
+        emotions=labels,
         metadata={"tags": tags},
     )
     db.save(entry)
@@ -96,11 +97,12 @@ def edit_memory(
             return
     emotions = analyze_emotions(text)
     tags = tag_text(text)
+    labels = [e[0] for e in emotions]
     updated = MemoryEntry(
         content=text,
         embedding=encode_text(text),
         timestamp=ts,
-        emotions=emotions,
+        emotions=labels,
         metadata={"tags": tags},
     )
     db.update(ts, updated)

@@ -9,7 +9,7 @@ from core.agent import Agent
 
 
 def test_agent_passes_tags_to_cue_builder():
-    fake_clf = MagicMock(return_value=[{"label": "POSITIVE"}])
+    fake_clf = MagicMock(return_value=[[{"label": "joy", "score": 0.8}]])
     with patch.object(emotion_model, "_load_classifier", return_value=fake_clf):
         emotion_model._classifier = None
         with patch("core.agent.build_cue", return_value="cue") as mock_cue:

@@ -13,11 +13,13 @@ from datetime import datetime
 
 
 def test_analyze_emotions_positive():
-    fake_clf = MagicMock(return_value=[{"label": "POSITIVE"}])
+    fake_clf = MagicMock(return_value=[[{"label": "joy", "score": 0.9}]])
     with patch.object(emotion_model, "_load_classifier", return_value=fake_clf):
         # reset cached classifier
         emotion_model._classifier = None
-        assert "positive" in emotion_model.analyze_emotions("I am happy today")
+        result = emotion_model.analyze_emotions("I am happy today")
+        assert result[0][0] == "happy"
+        assert isinstance(result[0][1], float)
 
 
 def test_dream_engine_summarize():
