@@ -16,11 +16,37 @@ except Exception:  # pragma: no cover - graceful fallback when package missing
 class LMStudioBackend(BaseLLM):
     """HTTP client for the LMStudio local server."""
 
-    def __init__(self, url: str | None = None, model: str | None = None) -> None:
+    def __init__(
+        self,
+        url: str | None = None,
+        model: str | None = None,
+        timeout: int | float | None = None,
+    ) -> None:
+        """Create a new LMStudio backend instance.
+
+        Parameters
+        ----------
+        url:
+            Endpoint for the LMStudio chat completion API.
+        model:
+            Model name to use for requests.
+        timeout:
+            Request timeout in seconds. Defaults to the ``LMSTUDIO_TIMEOUT``
+            environment variable or ``30`` seconds.
+        """
+
         self.url = url or os.getenv("LMSTUDIO_URL", "http://localhost:1234/v1/chat/completions")
         self.model = model or os.getenv("LMSTUDIO_MODEL", "local")
+        env_timeout = os.getenv("LMSTUDIO_TIMEOUT")
+        self.timeout = (
+            timeout
+            if timeout is not None
+            else float(env_timeout) if env_timeout is not None else 30.0
+        )
 
     def generate(self, prompt: str) -> str:
+        """Generate a completion for ``prompt`` using the LMStudio server."""
+
         if requests is None:
             return "LMStudio backend unavailable."
         try:
@@ -30,7 +56,7 @@ class LMStudioBackend(BaseLLM):
                     "model": self.model,
                     "messages": [{"role": "user", "content": prompt}],
                 },
-                timeout=30,
+                timeout=self.timeout,
             )
             data: Any = resp.json()
             choices = data.get("choices", [])

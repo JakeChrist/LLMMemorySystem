@@ -82,6 +82,7 @@ Use `gui` or `cli` in place of `repl` to start the graphical interface or comman
    ```bash
    export LMSTUDIO_URL=http://localhost:1234/v1/chat/completions
    export LMSTUDIO_MODEL=my-model-name
+   export LMSTUDIO_TIMEOUT=120
    ```
 4. Launch LLMemory:
    ```bash
