@@ -21,6 +21,7 @@ import sys
 from ms_utils import format_context
 from encoding.tagging import tag_text
 from core.memory_entry import MemoryEntry
+from llm.lmstudio_api import LMStudioBackend
 
 
 class MemoryBrowser(QDialog):
@@ -113,6 +114,14 @@ class SchedulerSettingsDialog(QDialog):
         self.alarm_spin.setValue(scheduler.T_alarm)
         form.addRow("T_alarm (s)", self.alarm_spin)
 
+        self.lmstudio_timeout_spin = None
+        agent = getattr(scheduler, "agent", None)
+        if agent and isinstance(getattr(agent, "llm", None), LMStudioBackend):
+            self.lmstudio_timeout_spin = QDoubleSpinBox()
+            self.lmstudio_timeout_spin.setRange(1.0, 600.0)
+            self.lmstudio_timeout_spin.setValue(agent.llm.timeout)
+            form.addRow("LMStudio timeout (s)", self.lmstudio_timeout_spin)
+
         layout.addLayout(form)
 
         buttons = QDialogButtonBox(
@@ -125,10 +134,16 @@ class SchedulerSettingsDialog(QDialog):
         self.setLayout(layout)
 
     def values(self):
+        timeout = (
+            self.lmstudio_timeout_spin.value()
+            if self.lmstudio_timeout_spin is not None
+            else None
+        )
         return (
             self.think_spin.value(),
             self.dream_spin.value(),
             self.alarm_spin.value(),
+            timeout,
         )
 
 class ChatBubble(QLabel):
@@ -147,6 +162,8 @@ class MemorySystemGUI(QWidget):
         super().__init__()
         self.agent = agent
         self.scheduler = scheduler
+        if self.scheduler is not None and not hasattr(self.scheduler, "agent"):
+            self.scheduler.agent = self.agent
         self._last_dream = None
         self._last_think = None
         self.init_ui()
@@ -314,11 +331,14 @@ class MemorySystemGUI(QWidget):
             return
         dlg = SchedulerSettingsDialog(self.scheduler)
         if dlg.exec() == QDialog.Accepted:
-            think, dream, alarm = dlg.values()
+            think, dream, alarm, timeout = dlg.values()
             self.scheduler.T_think = think
             self.scheduler.T_dream = dream
             self.scheduler.T_alarm = alarm
             self.scheduler.notify_input()
+            if timeout is not None and self.agent:
+                if isinstance(self.agent.llm, LMStudioBackend):
+                    self.agent.llm.timeout = timeout
 
     def show_memories(self):
         if not self.agent:
