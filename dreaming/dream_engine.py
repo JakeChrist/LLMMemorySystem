@@ -5,6 +5,8 @@ from __future__ import annotations
 from typing import Iterable, TYPE_CHECKING
 
 from ms_utils import format_context, Scheduler
+from llm import llm_router
+from core.memory_types.semantic import SemanticMemory
 
 if TYPE_CHECKING:  # pragma: no cover - for type hints only
     from core.memory_manager import MemoryManager
@@ -14,9 +16,36 @@ from core.memory_entry import MemoryEntry
 class DreamEngine:
     """Generate dream summaries from episodic memories."""
 
-    def summarize(self, memories: Iterable[MemoryEntry]) -> str:
+    def summarize(
+        self,
+        memories: Iterable[MemoryEntry],
+        *,
+        llm_name: str = "local",
+        semantic: SemanticMemory | None = None,
+    ) -> str:
+        """Return a concise dream summary using the configured LLM.
+
+        Parameters
+        ----------
+        memories:
+            Iterable of episodic memories to summarize.
+        llm_name:
+            Identifier of the LLM backend to use.
+        semantic:
+            Optional semantic memory store to persist the summary.
+        """
+
         lines = [m.content for m in memories]
-        return "Dream:" + " " + format_context(lines)
+        prompt = (
+            "Summarize the following memories in 1-2 sentences or as a concise schema:\n"
+            + format_context(lines)
+        )
+        llm = llm_router.get_llm(llm_name)
+        summary = llm.generate(prompt).strip()
+        summary = "Dream: " + summary
+        if semantic is not None:
+            semantic.add(summary)
+        return summary
 
     def run(
         self,
@@ -25,6 +54,8 @@ class DreamEngine:
         interval: float = 60.0,
         summary_size: int = 5,
         max_entries: int = 100,
+        llm_name: str = "local",
+        store_semantic: bool = False,
     ) -> Scheduler:
         """Periodically summarize recent memories and prune old ones.
 
@@ -45,7 +76,12 @@ class DreamEngine:
         def _task() -> None:
             recent = manager.all()[-summary_size:]
             if recent:
-                manager.add(self.summarize(recent))
+                summary = self.summarize(
+                    recent,
+                    llm_name=llm_name,
+                    semantic=manager.semantic if store_semantic else None,
+                )
+                manager.add(summary)
             manager.prune(max_entries)
 
         scheduler.schedule(interval, _task)
