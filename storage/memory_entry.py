@@ -1,1 +1,0 @@
-# Memory data classes
