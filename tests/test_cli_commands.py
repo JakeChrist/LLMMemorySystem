@@ -119,3 +119,17 @@ def test_start_and_stop_dreaming():
     manager.start_dreaming.assert_called_once_with(interval=5)
     memory_cli.stop_dream(manager)
     manager.stop_dreaming.assert_called_once()
+
+
+def test_reset_database_clears_all_categories(tmp_path):
+    db = Database(tmp_path / "mem.db")
+
+    memory_cli.add_memory(db, "a", model=None)
+    memory_cli.add_sem(db, "b")
+    memory_cli.add_proc(db, "c")
+
+    memory_cli.reset_database(db, assume_yes=True)
+
+    assert db.load_all() == []
+    assert db.load_all_semantic() == []
+    assert db.load_all_procedural() == []

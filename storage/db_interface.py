@@ -66,6 +66,8 @@ class Database:
         """Delete all stored memories."""
         cur = self.conn.cursor()
         cur.execute("DELETE FROM memories")
+        cur.execute("DELETE FROM semantic_memories")
+        cur.execute("DELETE FROM procedural_memories")
         self.conn.commit()
 
     def delete(self, timestamp: datetime) -> None:
