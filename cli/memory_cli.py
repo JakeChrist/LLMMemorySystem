@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime
 
 from core.emotion_model import analyze_emotions
 from core.memory_entry import MemoryEntry
@@ -67,6 +68,53 @@ def reset_database(db: Database, *, assume_yes: bool = False) -> None:
     print("Database cleared.")
 
 
+def edit_memory(
+    db: Database,
+    timestamp: str,
+    text: str,
+    *,
+    assume_yes: bool = False,
+) -> None:
+    """Edit an existing memory identified by ``timestamp``."""
+    ts = datetime.fromisoformat(timestamp)
+    entries = [m for m in db.load_all() if m.timestamp.isoformat() == timestamp]
+    if not entries:
+        print("Entry not found.")
+        return
+    if not assume_yes:
+        ans = input(f"Edit memory at {timestamp}? [y/N] ").strip().lower()
+        if ans not in {"y", "yes"}:
+            print("Aborted.")
+            return
+    emotions = analyze_emotions(text)
+    tags = tag_text(text)
+    updated = MemoryEntry(
+        content=text,
+        embedding=encode_text(text),
+        timestamp=ts,
+        emotions=emotions,
+        metadata={"tags": tags},
+    )
+    db.update(ts, updated)
+    print("Memory updated.")
+
+
+def delete_memory(db: Database, timestamp: str, *, assume_yes: bool = False) -> None:
+    """Remove a memory entry by ``timestamp``."""
+    ts = datetime.fromisoformat(timestamp)
+    entries = [m for m in db.load_all() if m.timestamp.isoformat() == timestamp]
+    if not entries:
+        print("Entry not found.")
+        return
+    if not assume_yes:
+        ans = input(f"Delete memory at {timestamp}? [y/N] ").strip().lower()
+        if ans not in {"y", "yes"}:
+            print("Aborted.")
+            return
+    db.delete(ts)
+    print("Memory deleted.")
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         description="Memory management CLI for stored agent memories"
@@ -101,6 +149,13 @@ def main(argv: list[str] | None = None) -> None:
 
     sub.add_parser("dream", help="Generate dream summary")
 
+    edit_p = sub.add_parser("edit", help="Edit a memory entry")
+    edit_p.add_argument("timestamp", help="Timestamp of memory to edit")
+    edit_p.add_argument("text", help="New memory text")
+
+    del_p = sub.add_parser("delete", help="Delete a memory entry")
+    del_p.add_argument("timestamp", help="Timestamp of memory to delete")
+
     args = parser.parse_args(argv)
 
     db = Database()
@@ -115,6 +170,10 @@ def main(argv: list[str] | None = None) -> None:
         dream_summary(db)
     elif args.cmd == "reset":
         reset_database(db)
+    elif args.cmd == "edit":
+        edit_memory(db, args.timestamp, args.text)
+    elif args.cmd == "delete":
+        delete_memory(db, args.timestamp)
 
 
 if __name__ == "__main__":

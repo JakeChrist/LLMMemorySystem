@@ -52,3 +52,22 @@ def test_model_argument_passed(tmp_path):
         memory_cli.add_memory(db, "hello", model="test-model")
 
     assert called["model"] == "test-model"
+
+
+def test_edit_and_delete(tmp_path, capsys, monkeypatch):
+    db = Database(tmp_path / "mem.db")
+
+    memory_cli.add_memory(db, "hello", model=None)
+    ts = db.load_all()[0].timestamp.isoformat()
+
+    monkeypatch.setattr("builtins.input", lambda *a, **kw: "y")
+    memory_cli.edit_memory(db, ts, "hello world")
+    out = capsys.readouterr().out
+    assert "Memory updated." in out
+    assert db.load_all()[0].content == "hello world"
+
+    monkeypatch.setattr("builtins.input", lambda *a, **kw: "y")
+    memory_cli.delete_memory(db, ts)
+    out = capsys.readouterr().out
+    assert "Memory deleted." in out
+    assert db.load_all() == []
