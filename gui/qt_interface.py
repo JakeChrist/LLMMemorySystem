@@ -17,6 +17,7 @@ import sys
 
 from ms_utils import format_context
 from encoding.tagging import tag_text
+from core.memory_entry import MemoryEntry
 
 
 class MemoryBrowser(QDialog):
@@ -97,7 +98,6 @@ class MemorySystemGUI(QWidget):
     def __init__(self, agent):
         super().__init__()
         self.agent = agent
-        self._last_dream: str | None = None
         self.init_ui()
 
     def init_ui(self):
@@ -132,13 +132,13 @@ class MemorySystemGUI(QWidget):
         right_panel.addWidget(self.dream_box)
         if self.agent:
             dream_entries = [
-                m.content
+
                 for m in self.agent.memory.all()
                 if m.content.startswith("Dream:")
             ]
             if dream_entries:
                 self._last_dream = dream_entries[-1]
-                self.dream_box.setPlainText(self._last_dream)
+
 
         right_panel.addWidget(QLabel("Next Dream"))
         self.countdown_label = QLabel("")
@@ -213,15 +213,13 @@ class MemorySystemGUI(QWidget):
             self.countdown_label.setText(f"{int(remaining)}s")
 
         dream_entries = [
-            m.content
+
             for m in self.agent.memory.all()
             if m.content.startswith("Dream:")
         ]
         if dream_entries:
             latest = dream_entries[-1]
-            if latest != self._last_dream:
-                self._last_dream = latest
-                self.dream_box.setPlainText(latest)
+
 
     def show_memories(self):
         if not self.agent:
@@ -259,14 +257,16 @@ class MemorySystemGUI(QWidget):
             context = [m.content for m in retrieved]
             working = self.agent.working_memory()
             dream_entries = [
-                m.content
+                m
                 for m in self.agent.memory.all()
                 if m.content.startswith("Dream:")
             ]
-            dreaming = dream_entries[-1] if dream_entries else ""
+            dreaming_entry = dream_entries[-1] if dream_entries else None
+            dreaming = dreaming_entry.content if dreaming_entry else ""
             mood = self.agent.mood
         else:
             mood = ""
+            dreaming_entry = None
             dreaming = ""
 
         # Add response bubble
@@ -279,8 +279,7 @@ class MemorySystemGUI(QWidget):
         self.memory_box.setPlainText(mem_text)
         self.mood_box.setPlainText(mood)
         self.dream_box.setPlainText(dreaming)
-        if dreaming:
-            self._last_dream = dreaming
+
 
 def run_gui(agent=None):
     """Launch the Qt GUI and return when the window is closed."""

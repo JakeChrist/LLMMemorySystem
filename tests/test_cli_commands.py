@@ -124,7 +124,7 @@ def test_start_and_stop_dreaming(monkeypatch):
     monkeypatch.setattr(memory_cli.time, "sleep", lambda *_: (_ for _ in ()).throw(KeyboardInterrupt()))
     memory_cli.start_dream(manager, interval=5)
 
-    manager.start_dreaming.assert_called_once_with(interval=5)
+    manager.start_dreaming.assert_called_once_with(interval=5, llm_name="local")
     scheduler.stop.assert_called_once()
     memory_cli.stop_dream(manager)
     manager.stop_dreaming.assert_called_once()

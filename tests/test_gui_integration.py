@@ -89,4 +89,5 @@ def test_update_countdown_refreshes_dream_box():
     assert "Dream: second" in gui.dream_box.toPlainText()
     assert gui.countdown_label.text() == "10s"
 
+
     app.quit()

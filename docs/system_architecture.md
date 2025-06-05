@@ -46,7 +46,7 @@ response using a pluggable LLM backend. The main subsystems are shown below.
    recent episodic memories using an LLM and can store the result back into
    semantic memory while pruning old entries.
 6. **LLM router** – ``llm_router.get_llm()`` selects the backend. Supported
-   names are ``local``, ``openai``, ``claude`` and ``gemini``. The ``Agent``
+   names are ``local``, ``openai``, ``claude``, ``gemini`` and ``lmstudio``. The ``Agent``
    chooses one at construction or via the command line.
 
 Episodic experiences feed into semantic summaries during dreaming and may form

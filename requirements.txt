@@ -8,4 +8,5 @@ PyQt5
 numpy
 faiss
 pyyaml
+requests
 pytest

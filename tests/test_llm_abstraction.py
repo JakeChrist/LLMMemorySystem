@@ -9,6 +9,7 @@ from llm.local_llm import LocalLLM
 from llm.openai_api import OpenAIBackend
 from llm.claude_api import ClaudeBackend
 from llm.gemini_api import GeminiBackend
+from llm.lmstudio_api import LMStudioBackend
 from core.agent import Agent
 from retrieval.retriever import Retriever
 from reconstruction.reconstructor import Reconstructor
@@ -21,6 +22,7 @@ def test_get_llm_variants():
     assert isinstance(llm_router.get_llm("openai"), OpenAIBackend)
     assert isinstance(llm_router.get_llm("claude"), ClaudeBackend)
     assert isinstance(llm_router.get_llm("gemini"), GeminiBackend)
+    assert isinstance(llm_router.get_llm("lmstudio"), LMStudioBackend)
     assert isinstance(llm_router.get_llm(), LocalLLM)
 
 

@@ -41,6 +41,8 @@ def test_manager_start_dreaming_uses_engine():
     manager = MemoryManager(db_path=":memory:")
 
     with patch.object(DreamEngine, "run", return_value=None) as mock_run:
-        manager.start_dreaming(interval=1, summary_size=1, max_entries=10)
+        manager.start_dreaming(interval=1, summary_size=1, max_entries=10, llm_name="openai")
         mock_run.assert_called_once()
+        _, kwargs = mock_run.call_args
+        assert kwargs.get("llm_name") == "openai"
 

@@ -12,7 +12,7 @@ python main.py MODE [--llm NAME] [--db PATH]
 ```
 
 - **MODE** – `cli`, `gui` or `repl`
-- **--llm** – which backend to use (`local`, `openai`, `claude`, `gemini`)
+- **--llm** – which backend to use (`local`, `openai`, `claude`, `gemini`, `lmstudio`)
 - **--db** – path to the SQLite database used for persistence
 
 ### Command line interface
@@ -28,7 +28,7 @@ edit TIMESTAMP TEXT
 delete TIMESTAMP
 list-sem | add-sem TEXT | edit-sem TIMESTAMP TEXT | delete-sem TIMESTAMP
 list-proc | add-proc TEXT | edit-proc TIMESTAMP TEXT | delete-proc TIMESTAMP
-start-dream [--interval SECS]
+start-dream [--interval SECS] [--llm NAME]
 stop-dream
 ```
 
@@ -54,7 +54,7 @@ The project only relies on the Python standard library for basic operation.  The
 
 - `sentence-transformers` – real text embeddings
 - `transformers` – sentiment analysis for emotions
-- `openai`, `anthropic`, `google-generativeai` – alternative LLM backends
+- `openai`, `anthropic`, `google-generativeai`, `requests` – alternative or helper LLM backends (OpenAI, Claude, Gemini, LMStudio)
 - `PyQt5` – graphical interface
 - `numpy`, `faiss` – vector index acceleration
 - `pyyaml` – reading YAML config files
