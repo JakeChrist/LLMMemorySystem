@@ -65,6 +65,9 @@ def test_agent_and_cli_end_to_end(tmp_path, capsys):
     out = capsys.readouterr().out
     assert "cats" in out
 
-    memory_cli.dream_summary(db)
+    with patch("dreaming.dream_engine.llm_router.get_llm") as mock_get:
+        mock_llm = LocalLLM()
+        mock_get.return_value = mock_llm
+        memory_cli.dream_summary(db)
     out = capsys.readouterr().out
     assert "Dream:" in out

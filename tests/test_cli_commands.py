@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -20,7 +20,11 @@ def test_cli_flow(tmp_path, capsys, monkeypatch):
     out = capsys.readouterr().out
     assert "cat" in out
 
-    memory_cli.dream_summary(db)
+    with patch("dreaming.dream_engine.llm_router.get_llm") as mock_get:
+        mock_llm = MagicMock()
+        mock_llm.generate.return_value = "dream"
+        mock_get.return_value = mock_llm
+        memory_cli.dream_summary(db)
     out = capsys.readouterr().out
     assert "Dream:" in out
 
