@@ -34,6 +34,7 @@ class Agent:
         self.memory.add(
             text,
             emotions=[e[0] for e in emotions],
+            emotion_scores={lbl: score for lbl, score in emotions},
             metadata={"role": "user"},
         )
 

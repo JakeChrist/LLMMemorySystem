@@ -40,7 +40,14 @@ class MemoryManager:
         if episodic:
             self.working.load(self.episodic.all())
 
-    def add(self, content: str, *, emotions: Iterable[str] | None = None, metadata: dict | None = None) -> MemoryEntry:
+    def add(
+        self,
+        content: str,
+        *,
+        emotions: Iterable[str] | None = None,
+        emotion_scores: dict[str, float] | None = None,
+        metadata: dict | None = None,
+    ) -> MemoryEntry:
         """Add content to episodic memory and update working memory."""
         from encoding.tagging import tag_text
 
@@ -48,7 +55,12 @@ class MemoryManager:
         meta = dict(metadata or {})
         meta["tags"] = tags
 
-        entry = self.episodic.add(content, emotions=emotions, metadata=meta)
+        entry = self.episodic.add(
+            content,
+            emotions=emotions,
+            emotion_scores=emotion_scores,
+            metadata=meta,
+        )
         self.db.save(entry)
         self.working.load(self.episodic.all())
         return entry
@@ -82,9 +94,19 @@ class MemoryManager:
 
     # --- Semantic memory helpers ---
     def add_semantic(
-        self, content: str, *, emotions: Iterable[str] | None = None, metadata: dict | None = None
+        self,
+        content: str,
+        *,
+        emotions: Iterable[str] | None = None,
+        emotion_scores: dict[str, float] | None = None,
+        metadata: dict | None = None,
     ) -> MemoryEntry:
-        entry = self.semantic.add(content, emotions=emotions, metadata=metadata)
+        entry = self.semantic.add(
+            content,
+            emotions=emotions,
+            emotion_scores=emotion_scores,
+            metadata=metadata,
+        )
         self.db.save_semantic(entry)
         return entry
 
@@ -103,9 +125,19 @@ class MemoryManager:
 
     # --- Procedural memory helpers ---
     def add_procedural(
-        self, content: str, *, emotions: Iterable[str] | None = None, metadata: dict | None = None
+        self,
+        content: str,
+        *,
+        emotions: Iterable[str] | None = None,
+        emotion_scores: dict[str, float] | None = None,
+        metadata: dict | None = None,
     ) -> MemoryEntry:
-        entry = self.procedural.add(content, emotions=emotions, metadata=metadata)
+        entry = self.procedural.add(
+            content,
+            emotions=emotions,
+            emotion_scores=emotion_scores,
+            metadata=metadata,
+        )
         self.db.save_procedural(entry)
         return entry
 

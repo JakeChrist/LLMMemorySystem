@@ -32,11 +32,13 @@ def add_memory(db: Database, text: str, model: str | None = None) -> None:
     """Add a new memory entry to the database."""
     emotions = analyze_emotions(text)
     labels = [e[0] for e in emotions]
+    scores = {label: score for label, score in emotions}
     tags = tag_text(text)
     entry = MemoryEntry(
         content=text,
         embedding=encode_text(text, model_name=model),
         emotions=labels,
+        emotion_scores=scores,
         metadata={"tags": tags},
     )
     db.save(entry)
@@ -98,11 +100,13 @@ def edit_memory(
     emotions = analyze_emotions(text)
     tags = tag_text(text)
     labels = [e[0] for e in emotions]
+    scores = {label: score for label, score in emotions}
     updated = MemoryEntry(
         content=text,
         embedding=encode_text(text),
         timestamp=ts,
         emotions=labels,
+        emotion_scores=scores,
         metadata={"tags": tags},
     )
     db.update(ts, updated)
@@ -158,6 +162,7 @@ def edit_sem(db: Database, timestamp: str, text: str, *, assume_yes: bool = Fals
         embedding=encode_text(text),
         timestamp=ts,
         emotions=existing.emotions,
+        emotion_scores=existing.emotion_scores,
         metadata=existing.metadata,
     )
     db.update_semantic(ts, updated)
@@ -213,6 +218,7 @@ def edit_proc(db: Database, timestamp: str, text: str, *, assume_yes: bool = Fal
         embedding=encode_text(text),
         timestamp=ts,
         emotions=existing.emotions,
+        emotion_scores=existing.emotion_scores,
         metadata=existing.metadata,
     )
     db.update_procedural(ts, updated)

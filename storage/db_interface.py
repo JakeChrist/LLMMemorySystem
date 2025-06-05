@@ -25,13 +25,13 @@ class Database:
         with self._lock:
             cur = self.conn.cursor()
             cur.execute(
-                "CREATE TABLE IF NOT EXISTS memories (content TEXT, timestamp REAL, embedding TEXT, emotions TEXT, metadata TEXT)"
+                "CREATE TABLE IF NOT EXISTS memories (content TEXT, timestamp REAL, embedding TEXT, emotions TEXT, emotion_scores TEXT, metadata TEXT)"
             )
             cur.execute(
-                "CREATE TABLE IF NOT EXISTS semantic_memories (content TEXT, timestamp REAL, embedding TEXT, emotions TEXT, metadata TEXT)"
+                "CREATE TABLE IF NOT EXISTS semantic_memories (content TEXT, timestamp REAL, embedding TEXT, emotions TEXT, emotion_scores TEXT, metadata TEXT)"
             )
             cur.execute(
-                "CREATE TABLE IF NOT EXISTS procedural_memories (content TEXT, timestamp REAL, embedding TEXT, emotions TEXT, metadata TEXT)"
+                "CREATE TABLE IF NOT EXISTS procedural_memories (content TEXT, timestamp REAL, embedding TEXT, emotions TEXT, emotion_scores TEXT, metadata TEXT)"
             )
             self.conn.commit()
 
@@ -39,12 +39,13 @@ class Database:
         with self._lock:
             cur = self.conn.cursor()
             cur.execute(
-                "INSERT INTO memories VALUES (?, ?, ?, ?, ?)",
+                "INSERT INTO memories VALUES (?, ?, ?, ?, ?, ?)",
                 (
                     entry.content,
                     entry.timestamp.timestamp(),
                     json.dumps(entry.embedding),
                     ",".join(entry.emotions),
+                    json.dumps(entry.emotion_scores),
                     json.dumps(entry.metadata),
                 ),
             )
@@ -54,16 +55,17 @@ class Database:
         with self._lock:
             cur = self.conn.cursor()
             rows = cur.execute(
-                "SELECT content, timestamp, embedding, emotions, metadata FROM memories"
+                "SELECT content, timestamp, embedding, emotions, emotion_scores, metadata FROM memories"
             ).fetchall()
         entries: List[MemoryEntry] = []
-        for content, ts, emb, emotions, metadata in rows:
+        for content, ts, emb, emotions, scores, metadata in rows:
             entries.append(
                 MemoryEntry(
                     content=content,
                     embedding=json.loads(emb) if emb else [],
                     timestamp=datetime.utcfromtimestamp(ts),
                     emotions=emotions.split(",") if emotions else [],
+                    emotion_scores=json.loads(scores) if scores else {},
                     metadata=json.loads(metadata) if metadata else {},
                 )
             )
@@ -90,11 +92,12 @@ class Database:
         with self._lock:
             cur = self.conn.cursor()
             cur.execute(
-                "UPDATE memories SET content=?, embedding=?, emotions=?, metadata=? WHERE timestamp=?",
+                "UPDATE memories SET content=?, embedding=?, emotions=?, emotion_scores=?, metadata=? WHERE timestamp=?",
                 (
                     entry.content,
                     json.dumps(entry.embedding),
                     ",".join(entry.emotions),
+                    json.dumps(entry.emotion_scores),
                     json.dumps(entry.metadata),
                     timestamp.timestamp(),
                 ),
@@ -132,12 +135,13 @@ class Database:
         with self._lock:
             cur = self.conn.cursor()
             cur.execute(
-                f"INSERT INTO {table} VALUES (?, ?, ?, ?, ?)",
+                f"INSERT INTO {table} VALUES (?, ?, ?, ?, ?, ?)",
                 (
                     entry.content,
                     entry.timestamp.timestamp(),
                     json.dumps(entry.embedding),
                     ",".join(entry.emotions),
+                    json.dumps(entry.emotion_scores),
                     json.dumps(entry.metadata),
                 ),
             )
@@ -147,16 +151,17 @@ class Database:
         with self._lock:
             cur = self.conn.cursor()
             rows = cur.execute(
-                f"SELECT content, timestamp, embedding, emotions, metadata FROM {table}"
+                f"SELECT content, timestamp, embedding, emotions, emotion_scores, metadata FROM {table}"
             ).fetchall()
         entries: List[MemoryEntry] = []
-        for content, ts, emb, emotions, metadata in rows:
+        for content, ts, emb, emotions, scores, metadata in rows:
             entries.append(
                 MemoryEntry(
                     content=content,
                     embedding=json.loads(emb) if emb else [],
                     timestamp=datetime.utcfromtimestamp(ts),
                     emotions=emotions.split(",") if emotions else [],
+                    emotion_scores=json.loads(scores) if scores else {},
                     metadata=json.loads(metadata) if metadata else {},
                 )
             )
@@ -175,11 +180,12 @@ class Database:
         with self._lock:
             cur = self.conn.cursor()
             cur.execute(
-                f"UPDATE {table} SET content=?, embedding=?, emotions=?, metadata=? WHERE timestamp=?",
+                f"UPDATE {table} SET content=?, embedding=?, emotions=?, emotion_scores=?, metadata=? WHERE timestamp=?",
                 (
                     entry.content,
                     json.dumps(entry.embedding),
                     ",".join(entry.emotions),
+                    json.dumps(entry.emotion_scores),
                     json.dumps(entry.metadata),
                     timestamp.timestamp(),
                 ),
