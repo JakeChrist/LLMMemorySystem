@@ -24,7 +24,7 @@ class OpenAIBackend(BaseLLM):
 
     def generate(self, prompt: str) -> str:
         if openai is None:
-            return f"OpenAI unavailable: {prompt}"
+            return "OpenAI backend unavailable."
         if hasattr(openai, "chat"):
             resp: Any = openai.chat.completions.create(
                 model=self.model,

@@ -26,7 +26,7 @@ class ClaudeBackend(BaseLLM):
 
     def generate(self, prompt: str) -> str:
         if self.client is None:
-            return f"Claude unavailable: {prompt}"
+            return "Claude backend unavailable."
         resp: Any = self.client.messages.create(
             model=self.model,
             messages=[{"role": "user", "content": prompt}],
