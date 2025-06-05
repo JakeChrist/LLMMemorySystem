@@ -29,9 +29,13 @@ class Agent:
         """Process user input and return LLM response."""
         emotions = analyze_emotions(text)
         if emotions:
-            self.mood = emotions[0]
+            self.mood = emotions[0][0]
 
-        self.memory.add(text, emotions=emotions, metadata={"role": "user"})
+        self.memory.add(
+            text,
+            emotions=[e[0] for e in emotions],
+            metadata={"role": "user"},
+        )
 
         tags = tag_text(text)
         cue = build_cue(text, tags=tags, state={"mood": self.mood})

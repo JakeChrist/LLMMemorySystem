@@ -9,11 +9,11 @@ from core.agent import Agent
 
 
 def test_agent_passes_mood_to_retriever():
-    fake_clf = MagicMock(return_value=[{"label": "POSITIVE"}])
+    fake_clf = MagicMock(return_value=[[{"label": "joy", "score": 0.8}]])
     with patch.object(emotion_model, "_load_classifier", return_value=fake_clf):
         emotion_model._classifier = None
         with patch("retrieval.retriever.Retriever.query", return_value=[]) as mock_q:
             agent = Agent("local")
             agent.receive("I am thrilled")
             _, kwargs = mock_q.call_args
-            assert kwargs.get("mood") == "positive"
+            assert kwargs.get("mood") == "happy"
