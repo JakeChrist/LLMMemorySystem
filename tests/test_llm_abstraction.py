@@ -44,14 +44,26 @@ def test_agent_uses_llm_router():
 
 def test_agent_and_cli_end_to_end(tmp_path, capsys):
     agent = Agent("local")
+    agent.memory.add_semantic("the sky is blue")
+    agent.memory.add_procedural("open the door by turning the knob")
     resp = agent.receive("cats like milk")
     assert "cats" in resp
 
-    retriever = Retriever(agent.memory.all())
+    retriever = Retriever(
+        agent.memory.all(),
+        semantic=agent.memory.semantic.all(),
+        procedural=agent.memory.procedural.all(),
+    )
     results = retriever.query("cats", top_k=2)
     reconstructor = Reconstructor()
     context = reconstructor.build_context(results)
     assert "cats" in context
+
+    sem_result = retriever.query("sky", top_k=1)
+    assert sem_result and sem_result[0].content == "the sky is blue"
+
+    proc_result = retriever.query("turning the knob", top_k=1)
+    assert proc_result and proc_result[0].content.startswith("open the door")
 
     db = Database(tmp_path / "mem.db")
     for entry in agent.memory.all():
