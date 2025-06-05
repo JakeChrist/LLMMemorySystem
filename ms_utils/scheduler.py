@@ -30,7 +30,8 @@ class Scheduler:
         """Stop all scheduled tasks."""
         self._stop.set()
         for t in list(self._threads):
-            t.join(timeout=0)
+            t.join()
+        self._threads.clear()
 
 
 __all__ = ["Scheduler"]
