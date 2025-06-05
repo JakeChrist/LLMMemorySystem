@@ -34,7 +34,13 @@ class MemoryManager:
 
     def add(self, content: str, *, emotions: Iterable[str] | None = None, metadata: dict | None = None) -> MemoryEntry:
         """Add content to episodic memory and update working memory."""
-        entry = self.episodic.add(content, emotions=emotions, metadata=metadata)
+        from encoding.tagging import tag_text
+
+        tags = tag_text(content)
+        meta = dict(metadata or {})
+        meta["tags"] = tags
+
+        entry = self.episodic.add(content, emotions=emotions, metadata=meta)
         self.db.save(entry)
         self.working.load(self.episodic.all())
         return entry

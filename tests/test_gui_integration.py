@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from datetime import datetime
 import os
 
@@ -30,7 +30,10 @@ def test_gui_handle_submit_updates_panels():
 
     gui = MemorySystemGUI(mock_agent)
     gui.input_box.setPlainText("hello")
-    gui.handle_submit()
+    with patch("retrieval.cue_builder.build_cue", return_value="cue") as mock_cue:
+        gui.handle_submit()
+        _, kwargs = mock_cue.call_args
+        assert kwargs.get("tags") == ["greeting"]
 
     assert mock_agent.receive.called
     assert gui.response_list.item(0).text() == "reply"

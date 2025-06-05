@@ -12,6 +12,8 @@ def test_cli_flow(tmp_path, capsys, monkeypatch):
     db = Database(tmp_path / "mem.db")
 
     memory_cli.add_memory(db, "the cat sat", model=None)
+    stored = db.load_all()[0]
+    assert stored.metadata.get("tags") == ["animal"]
     memory_cli.list_memories(db)
     out = capsys.readouterr().out
     assert "cat" in out
