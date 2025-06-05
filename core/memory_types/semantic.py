@@ -14,11 +14,19 @@ class SemanticMemory:
     def __init__(self) -> None:
         self._entries: List[MemoryEntry] = []
 
-    def add(self, content: str, *, emotions: Iterable[str] | None = None, metadata: dict | None = None) -> MemoryEntry:
+    def add(
+        self,
+        content: str,
+        *,
+        emotions: Iterable[str] | None = None,
+        emotion_scores: dict[str, float] | None = None,
+        metadata: dict | None = None,
+    ) -> MemoryEntry:
         entry = MemoryEntry(
             content=content,
             embedding=encode_text(content),
             emotions=list(emotions or []),
+            emotion_scores=emotion_scores or {},
             metadata=metadata or {},
         )
         self._entries.append(entry)
