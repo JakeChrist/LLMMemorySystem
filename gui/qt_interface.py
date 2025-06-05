@@ -10,6 +10,9 @@ from PyQt5.QtWidgets import (
     QSplitter,
     QSizePolicy,
     QDialog,
+    QDialogButtonBox,
+    QDoubleSpinBox,
+    QFormLayout,
     QListWidget,
 )
 from PyQt5.QtCore import Qt, QTimer
@@ -82,6 +85,51 @@ class MemoryBrowser(QDialog):
         self.manager.delete(self.current)
         self.current = None
         self.refresh()
+
+
+class SchedulerSettingsDialog(QDialog):
+    """Dialog for configuring :class:`CognitiveScheduler` timers."""
+
+    def __init__(self, scheduler):
+        super().__init__()
+        self.scheduler = scheduler
+        self.setWindowTitle("Scheduler Settings")
+
+        layout = QVBoxLayout()
+        form = QFormLayout()
+
+        self.think_spin = QDoubleSpinBox()
+        self.think_spin.setRange(1.0, 3600.0)
+        self.think_spin.setValue(scheduler.T_think)
+        form.addRow("T_think (s)", self.think_spin)
+
+        self.dream_spin = QDoubleSpinBox()
+        self.dream_spin.setRange(1.0, 7200.0)
+        self.dream_spin.setValue(scheduler.T_dream)
+        form.addRow("T_dream (s)", self.dream_spin)
+
+        self.alarm_spin = QDoubleSpinBox()
+        self.alarm_spin.setRange(1.0, 7200.0)
+        self.alarm_spin.setValue(scheduler.T_alarm)
+        form.addRow("T_alarm (s)", self.alarm_spin)
+
+        layout.addLayout(form)
+
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+        )
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+        self.setLayout(layout)
+
+    def values(self):
+        return (
+            self.think_spin.value(),
+            self.dream_spin.value(),
+            self.alarm_spin.value(),
+        )
 
 class ChatBubble(QLabel):
     def __init__(self, text, is_user=True):
@@ -159,9 +207,16 @@ class MemorySystemGUI(QWidget):
         self.countdown_label = QLabel("")
         right_panel.addWidget(self.countdown_label)
 
+        btn_row = QHBoxLayout()
         self.mem_button = QPushButton("Browse Memories")
         self.mem_button.clicked.connect(self.show_memories)
-        right_panel.addWidget(self.mem_button)
+        btn_row.addWidget(self.mem_button)
+
+        self.settings_button = QPushButton("Settings")
+        self.settings_button.clicked.connect(self.show_settings)
+        btn_row.addWidget(self.settings_button)
+
+        right_panel.addLayout(btn_row)
 
         # Input bar
         self.input_box = QTextEdit()
@@ -253,6 +308,17 @@ class MemorySystemGUI(QWidget):
             if latest_think is not self._last_think:
                 self.think_box.setPlainText(latest_think.content)
                 self._last_think = latest_think
+
+    def show_settings(self):
+        if not self.scheduler:
+            return
+        dlg = SchedulerSettingsDialog(self.scheduler)
+        if dlg.exec() == QDialog.Accepted:
+            think, dream, alarm = dlg.values()
+            self.scheduler.T_think = think
+            self.scheduler.T_dream = dream
+            self.scheduler.T_alarm = alarm
+            self.scheduler.notify_input()
 
     def show_memories(self):
         if not self.agent:
