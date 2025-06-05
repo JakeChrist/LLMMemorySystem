@@ -163,7 +163,14 @@ class MemoryManager:
         max_entries: int = 100,
         llm_name: str = "local",
     ) -> Scheduler:
-        """Start background dreaming with the :class:`DreamEngine`."""
+        """Start background dreaming with the :class:`DreamEngine`.
+
+        Any active thinking scheduler will be automatically stopped before
+        launching a new dreaming task.
+        """
+
+        # Cancel an existing thinking loop if present
+        self.stop_thinking()
 
         engine = DreamEngine()
         self._dream_scheduler = engine.run(
@@ -197,7 +204,14 @@ class MemoryManager:
         interval: float = 60.0,
         llm_name: str = "local",
     ) -> Scheduler:
-        """Start periodic introspective thinking via :class:`ThinkingEngine`."""
+        """Start periodic introspective thinking via :class:`ThinkingEngine`.
+
+        Any active dreaming scheduler will be automatically cancelled before
+        launching a new thinking task.
+        """
+
+        # Cancel an existing dreaming loop if present
+        self.stop_dreaming()
 
         engine = ThinkingEngine()
         self._think_scheduler = engine.run(

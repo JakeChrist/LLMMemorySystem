@@ -7,6 +7,7 @@ from ms_utils.scheduler import Scheduler
 
 from core.memory_manager import MemoryManager
 from thinking.thinking_engine import ThinkingEngine
+from dreaming.dream_engine import DreamEngine
 
 
 def test_think_once_stores_introspection():
@@ -46,3 +47,17 @@ def test_manager_start_thinking_uses_engine():
         mock_run.assert_called_once()
         _, kwargs = mock_run.call_args
         assert kwargs.get("llm_name") == "openai"
+
+
+def test_start_thinking_stops_dreaming():
+    manager = MemoryManager(db_path=":memory:")
+
+    dream_sched = MagicMock(spec=Scheduler)
+    with patch.object(DreamEngine, "run", return_value=dream_sched):
+        manager.start_dreaming(interval=1)
+
+    think_sched = MagicMock(spec=Scheduler)
+    with patch.object(ThinkingEngine, "run", return_value=think_sched):
+        manager.start_thinking(interval=1)
+
+    assert dream_sched.stop.called

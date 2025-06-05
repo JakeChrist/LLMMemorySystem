@@ -6,6 +6,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from core.memory_manager import MemoryManager
 from dreaming.dream_engine import DreamEngine
+from thinking.thinking_engine import ThinkingEngine
+from ms_utils.scheduler import Scheduler
 
 
 def test_dream_run_summarizes_and_prunes(tmp_path):
@@ -50,4 +52,18 @@ def test_manager_start_dreaming_uses_engine():
         mock_run.assert_called_once()
         _, kwargs = mock_run.call_args
         assert kwargs.get("llm_name") == "openai"
+
+
+def test_start_dreaming_stops_thinking():
+    manager = MemoryManager(db_path=":memory:")
+
+    think_sched = MagicMock(spec=Scheduler)
+    with patch.object(ThinkingEngine, "run", return_value=think_sched):
+        manager.start_thinking(interval=1)
+
+    dream_sched = MagicMock(spec=Scheduler)
+    with patch.object(DreamEngine, "run", return_value=dream_sched):
+        manager.start_dreaming(interval=1)
+
+    assert think_sched.stop.called
 
