@@ -72,8 +72,10 @@ class MemoryManager:
         if entry in self.episodic._entries:
             entry.content = new_content
             from encoding.encoder import encode_text
+            from encoding.tagging import tag_text
 
             entry.embedding = encode_text(new_content)
+            entry.metadata["tags"] = tag_text(new_content)
             self.db.update(entry.timestamp, entry)
             self.working.load(self.episodic.all())
 

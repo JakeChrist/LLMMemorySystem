@@ -11,8 +11,9 @@ import pytest
 PyQt5 = pytest.importorskip("PyQt5")
 from PyQt5.QtWidgets import QApplication
 
-from gui.qt_interface import MemorySystemGUI
+from gui.qt_interface import MemorySystemGUI, MemoryBrowser
 from core.memory_entry import MemoryEntry
+from core.memory_manager import MemoryManager
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -40,5 +41,24 @@ def test_gui_handle_submit_updates_panels():
     assert "fact1" in gui.memory_box.toPlainText()
     assert "happy" in gui.mood_box.toPlainText()
     assert "Dream:" in gui.dream_box.toPlainText()
+
+    app.quit()
+
+
+def test_memory_browser_edit_refreshes_tags(tmp_path):
+    app = QApplication.instance() or QApplication([])
+
+    manager = MemoryManager(db_path=tmp_path / "mem.db")
+    entry = manager.add("hello")
+
+    browser = MemoryBrowser(manager)
+    browser.display_memory(0)
+    browser.detail.setPlainText("the cat sat")
+    browser.save_current()
+
+    assert entry.metadata.get("tags") == ["animal"]
+    stored = manager.db.load_all()[0]
+    assert stored.metadata.get("tags") == ["animal"]
+    assert manager.working.contents()[0].metadata.get("tags") == ["animal"]
 
     app.quit()
