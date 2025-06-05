@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Iterable, List, Sequence
+from typing import Iterable, List
 
 try:  # pragma: no cover - optional dependency
     import numpy as np
@@ -37,7 +37,7 @@ class FaissIndex:
     def available(self) -> bool:
         return self._index is not None
 
-    def query(self, vector: Sequence[float], top_k: int = 5) -> List[int]:
+    def query(self, vector: List[float], top_k: int = 5) -> List[int]:
         if self._index is None or np is None:
             return []
         vec = np.array([vector], dtype="float32")

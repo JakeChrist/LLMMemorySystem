@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Dict, Iterable, List, Sequence
+from typing import Dict, Iterable, List
 
 from core.memory_entry import MemoryEntry
 from encoding.encoder import encode_text
@@ -72,7 +72,7 @@ class Retriever:
             return dot / (norm_a * norm_b)
         return 0.0
 
-    def _cosine_dense(self, a: Sequence[float], b: Sequence[float]) -> float:
+    def _cosine_dense(self, a: List[float], b: List[float]) -> float:
         dot = sum(x * y for x, y in zip(a, b))
         norm_a = sum(x * x for x in a) ** 0.5
         norm_b = sum(x * x for x in b) ** 0.5
