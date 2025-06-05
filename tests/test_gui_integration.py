@@ -147,6 +147,8 @@ def test_main_gui_initializes_scheduler(tmp_path):
         main.main(["gui", "--db", str(db), "--llm", "local"])
 
         MockAgent.assert_called_once_with("local", db_path=str(db))
-        MockSched.assert_called_once_with(MockAgent.return_value.memory)
+        MockSched.assert_called_once_with(
+            MockAgent.return_value.memory, llm_name="local"
+        )
         mock_instance.run.assert_called_once()
         runner.stop.assert_called_once()

@@ -25,11 +25,29 @@ class CognitiveScheduler:
         self,
         manager: MemoryManager,
         *,
+        llm_name: str = "local",
         T_think: float = 60.0,
         T_dream: float = 300.0,
         T_alarm: float = 1200.0,
     ) -> None:
+        """Create a scheduler for ``manager`` using ``llm_name`` for background tasks.
+
+        Parameters
+        ----------
+        manager:
+            ``MemoryManager`` instance controlling memory operations.
+        llm_name:
+            LLM backend used by the thinking and dreaming engines.
+        T_think:
+            Idle time in seconds before entering the reflective state.
+        T_dream:
+            Idle time in seconds before starting the dreaming engine.
+        T_alarm:
+            Maximum sleep duration before automatically waking.
+        """
+
         self.manager = manager
+        self.llm_name = llm_name
         self.T_think = T_think
         self.T_dream = T_dream
         self.T_alarm = T_alarm
@@ -66,11 +84,15 @@ class CognitiveScheduler:
             if idle >= self.T_dream:
                 self.state = CognitiveState.ASLEEP
                 self.state_start = now
-                self._dream_sched = self.manager.start_dreaming()
+                self._dream_sched = self.manager.start_dreaming(
+                    llm_name=self.llm_name
+                )
             elif idle >= self.T_think:
                 self.state = CognitiveState.REFLECTIVE
                 self.state_start = now
-                self._think_sched = self.manager.start_thinking()
+                self._think_sched = self.manager.start_thinking(
+                    llm_name=self.llm_name
+                )
         elif self.state == CognitiveState.REFLECTIVE:
             if idle >= self.T_dream:
                 if self._think_sched:
@@ -78,7 +100,9 @@ class CognitiveScheduler:
                     self._think_sched = None
                 self.state = CognitiveState.ASLEEP
                 self.state_start = now
-                self._dream_sched = self.manager.start_dreaming()
+                self._dream_sched = self.manager.start_dreaming(
+                    llm_name=self.llm_name
+                )
         elif self.state == CognitiveState.ASLEEP:
             if now - self.state_start >= self.T_alarm:
                 if self._dream_sched:

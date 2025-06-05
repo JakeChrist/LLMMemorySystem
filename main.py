@@ -61,10 +61,10 @@ def main(argv: list[str] | None = None) -> None:
 
         agent = Agent(args.llm, db_path=args.db)
         # Manage dreaming and thinking automatically via the cognitive scheduler.
-        scheduler = CognitiveScheduler(agent.memory)
+        scheduler = CognitiveScheduler(agent.memory, llm_name=args.llm)
         runner = scheduler.run()
         try:
-            run_gui(agent)
+            run_gui(agent, scheduler)
         finally:
             runner.stop()
     else:  # repl

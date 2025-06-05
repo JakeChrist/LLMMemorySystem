@@ -11,3 +11,7 @@ three states:
 Dreaming is automatically stopped after `T_alarm` seconds to prevent endless
 sleep. Any user activity immediately wakes the scheduler and cancels running
 engines.
+
+The scheduler forwards the agent's configured LLM backend to both the thinking
+and dreaming engines so background activities use the same model as interactive
+conversations.

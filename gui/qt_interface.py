@@ -95,9 +95,10 @@ class ChatBubble(QLabel):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
 
 class MemorySystemGUI(QWidget):
-    def __init__(self, agent):
+    def __init__(self, agent, scheduler=None):
         super().__init__()
         self.agent = agent
+        self.scheduler = scheduler
         self._last_dream = None
         self._last_think = None
         self.init_ui()
@@ -265,6 +266,9 @@ class MemorySystemGUI(QWidget):
             return
         self.input_box.clear()
 
+        if self.scheduler is not None:
+            self.scheduler.notify_input()
+
         # Add user message to chat
         self.add_message(user_input, is_user=True)
 
@@ -313,8 +317,17 @@ class MemorySystemGUI(QWidget):
         self.dream_box.setPlainText(dreaming)
 
 
-def run_gui(agent=None):
-    """Launch the Qt GUI and return when the window is closed."""
+def run_gui(agent=None, scheduler=None):
+    """Launch the Qt GUI and return when the window is closed.
+
+    Parameters
+    ----------
+    agent:
+        Optional :class:`~core.agent.Agent` controlling the conversation.
+    scheduler:
+        Optional :class:`~core.cognitive_scheduler.CognitiveScheduler` used to
+        report user input events.
+    """
     # QApplication should be instantiated once in a process.  Creating
     # a new instance when one already exists raises a runtime error,
     # which can easily happen in interactive sessions (e.g. Jupyter).
@@ -322,7 +335,7 @@ def run_gui(agent=None):
     if app is None:
         app = QApplication(sys.argv)
 
-    gui = MemorySystemGUI(agent)
+    gui = MemorySystemGUI(agent, scheduler)
     gui.show()
     # exec_() is deprecated in modern PyQt5 versions but still supported.
     # Using exec() keeps compatibility with both newer and older releases.
