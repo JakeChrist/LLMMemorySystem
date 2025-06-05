@@ -26,10 +26,14 @@ class MemoryManager:
         self.procedural = ProceduralMemory()
         self.working = WorkingMemory()
 
-        # Load any existing memories from the database into episodic memory
-        existing = self.db.load_all()
-        self.episodic._entries.extend(existing)
-        if existing:
+        # Load any existing memories from the database into memory stores
+        episodic = self.db.load_all()
+        self.episodic._entries.extend(episodic)
+        semantic = self.db.load_all_semantic()
+        self.semantic._entries.extend(semantic)
+        procedural = self.db.load_all_procedural()
+        self.procedural._entries.extend(procedural)
+        if episodic:
             self.working.load(self.episodic.all())
 
     def add(self, content: str, *, emotions: Iterable[str] | None = None, metadata: dict | None = None) -> MemoryEntry:
@@ -69,6 +73,48 @@ class MemoryManager:
             entry.embedding = encode_text(new_content)
             self.db.update(entry.timestamp, entry)
             self.working.load(self.episodic.all())
+
+    # --- Semantic memory helpers ---
+    def add_semantic(
+        self, content: str, *, emotions: Iterable[str] | None = None, metadata: dict | None = None
+    ) -> MemoryEntry:
+        entry = self.semantic.add(content, emotions=emotions, metadata=metadata)
+        self.db.save_semantic(entry)
+        return entry
+
+    def delete_semantic(self, entry: MemoryEntry) -> None:
+        if entry in self.semantic._entries:
+            self.semantic._entries.remove(entry)
+            self.db.delete_semantic(entry.timestamp)
+
+    def update_semantic(self, entry: MemoryEntry, new_content: str) -> None:
+        if entry in self.semantic._entries:
+            entry.content = new_content
+            from encoding.encoder import encode_text
+
+            entry.embedding = encode_text(new_content)
+            self.db.update_semantic(entry.timestamp, entry)
+
+    # --- Procedural memory helpers ---
+    def add_procedural(
+        self, content: str, *, emotions: Iterable[str] | None = None, metadata: dict | None = None
+    ) -> MemoryEntry:
+        entry = self.procedural.add(content, emotions=emotions, metadata=metadata)
+        self.db.save_procedural(entry)
+        return entry
+
+    def delete_procedural(self, entry: MemoryEntry) -> None:
+        if entry in self.procedural._entries:
+            self.procedural._entries.remove(entry)
+            self.db.delete_procedural(entry.timestamp)
+
+    def update_procedural(self, entry: MemoryEntry, new_content: str) -> None:
+        if entry in self.procedural._entries:
+            entry.content = new_content
+            from encoding.encoder import encode_text
+
+            entry.embedding = encode_text(new_content)
+            self.db.update_procedural(entry.timestamp, entry)
 
     def start_dreaming(
         self,
