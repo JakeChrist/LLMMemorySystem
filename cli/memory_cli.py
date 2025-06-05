@@ -259,6 +259,29 @@ def stop_dream(manager: MemoryManager) -> None:
     logger.info("Dreaming stopped.")
 
 
+def start_think(
+    manager: MemoryManager,
+    *,
+    interval: float = 30.0,
+    llm_name: str = "local",
+) -> None:
+    """Begin periodic thinking using ``MemoryManager`` and block until interrupted."""
+    scheduler = manager.start_thinking(interval=interval, llm_name=llm_name)
+    logger.info("Thinking started. Press Ctrl+C to stop.")
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        scheduler.stop()
+        logger.info("Thinking stopped.")
+
+
+def stop_think(manager: MemoryManager) -> None:
+    """Stop any active thinking scheduler."""
+    manager.stop_thinking()
+    logger.info("Thinking stopped.")
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         description="Memory management CLI for stored agent memories"
@@ -314,6 +337,23 @@ def main(argv: list[str] | None = None) -> None:
     )
     sub.add_parser("stop-dream", help="Stop periodic dreaming")
 
+    think_p = sub.add_parser(
+        "start-think",
+        help="Start periodic introspective thinking",
+    )
+    think_p.add_argument(
+        "--interval",
+        type=float,
+        default=30.0,
+        help="Seconds between reflective thoughts",
+    )
+    think_p.add_argument(
+        "--llm",
+        default="local",
+        help="LLM backend to use for thinking",
+    )
+    sub.add_parser("stop-think", help="Stop periodic thinking")
+
     edit_p = sub.add_parser("edit", help="Edit a memory entry")
     edit_p.add_argument("timestamp", help="Timestamp of memory to edit")
     edit_p.add_argument("text", help="New memory text")
@@ -367,6 +407,12 @@ def main(argv: list[str] | None = None) -> None:
     elif args.cmd == "stop-dream":
         manager = MemoryManager(args.db)
         stop_dream(manager)
+    elif args.cmd == "start-think":
+        manager = MemoryManager(args.db)
+        start_think(manager, interval=args.interval, llm_name=args.llm)
+    elif args.cmd == "stop-think":
+        manager = MemoryManager(args.db)
+        stop_think(manager)
     elif args.cmd == "reset":
         reset_database(db)
     elif args.cmd == "edit":
