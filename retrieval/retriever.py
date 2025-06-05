@@ -19,6 +19,7 @@ class Retriever:
 
     def __init__(self, memories: Iterable[MemoryEntry]):
         self._memories = list(memories)
+        self._tags: List[set[str]] = [set(m.metadata.get("tags", [])) for m in self._memories]
         self._index = None
         self._dense_vectors: List[List[float]] = []
         self._vocab: Dict[str, int] = {}
@@ -58,8 +59,16 @@ class Retriever:
             return dot / (norm_a * norm_b)
         return 0.0
 
-    def query(self, text: str, top_k: int = 5, *, mood: str | None = None) -> List[MemoryEntry]:
+    def query(
+        self,
+        text: str,
+        top_k: int = 5,
+        *,
+        mood: str | None = None,
+        tags: Iterable[str] | None = None,
+    ) -> List[MemoryEntry]:
         embedding = encode_text(text)
+        q_tags = set(tags or [])
         now = datetime.utcnow()
 
         if (
@@ -77,18 +86,24 @@ class Retriever:
                     sim = self._cosine_dense(embedding, vec)
                     recency = 1 / ((now - memory.timestamp).total_seconds() + 1)
                     boost = 0.1 if mood in memory.emotions else 0.0
-                    scored.append((sim + 0.1 * recency + boost, memory))
+                    tag_score = (
+                        len(q_tags & self._tags[i]) / len(q_tags) if q_tags else 0.0
+                    )
+                    scored.append((sim + tag_score + 0.1 * recency + boost, memory))
                 scored.sort(key=lambda item: item[0], reverse=True)
                 results = [m for _, m in scored]
             return results[:top_k]
 
         if self._dense_vectors and embedding and isinstance(embedding[0], (float, int)):
             scored = []
-            for memory, vec in zip(self._memories, self._dense_vectors):
+            for i, (memory, vec) in enumerate(zip(self._memories, self._dense_vectors)):
                 sim = self._cosine_dense(embedding, vec)
                 recency = 1 / ((now - memory.timestamp).total_seconds() + 1)
                 boost = 0.1 if mood and mood in memory.emotions else 0.0
-                scored.append((sim + 0.1 * recency + boost, memory))
+                tag_score = (
+                    len(q_tags & self._tags[i]) / len(q_tags) if q_tags else 0.0
+                )
+                scored.append((sim + tag_score + 0.1 * recency + boost, memory))
             scored.sort(key=lambda item: item[0], reverse=True)
             return [m for _, m in scored[:top_k]]
 
@@ -99,10 +114,13 @@ class Retriever:
             if idx is not None:
                 q_vec[idx] = q_vec.get(idx, 0) + 1
         scored = []
-        for memory, vec in zip(self._memories, self._vectors):
+        for i, (memory, vec) in enumerate(zip(self._memories, self._vectors)):
             sim = self._cosine(q_vec, vec)
             recency = 1 / ((now - memory.timestamp).total_seconds() + 1)
             boost = 0.1 if mood and mood in memory.emotions else 0.0
-            scored.append((sim + 0.1 * recency + boost, memory))
+            tag_score = (
+                len(q_tags & self._tags[i]) / len(q_tags) if q_tags else 0.0
+            )
+            scored.append((sim + tag_score + 0.1 * recency + boost, memory))
         scored.sort(key=lambda item: item[0], reverse=True)
         return [m for _, m in scored[:top_k]]

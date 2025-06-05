@@ -32,9 +32,12 @@ def test_gui_handle_submit_updates_panels():
     gui = MemorySystemGUI(mock_agent)
     gui.input_box.setPlainText("hello")
     with patch("retrieval.cue_builder.build_cue", return_value="cue") as mock_cue:
-        gui.handle_submit()
-        _, kwargs = mock_cue.call_args
-        assert kwargs.get("tags") == ["greeting"]
+        with patch("retrieval.retriever.Retriever.query", return_value=[] ) as mock_query:
+            gui.handle_submit()
+            _, kwargs = mock_cue.call_args
+            assert kwargs.get("tags") == ["greeting"]
+            _, q_kwargs = mock_query.call_args
+            assert q_kwargs.get("tags") == ["greeting"]
 
     assert mock_agent.receive.called
     assert gui.response_list.item(0).text() == "reply"
