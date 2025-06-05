@@ -36,3 +36,13 @@ def test_run_invokes_think_once(tmp_path):
             sched = engine.run(manager, interval=0.1)
     assert isinstance(sched, Scheduler)
     assert mock_once.called
+
+
+def test_manager_start_thinking_uses_engine():
+    manager = MemoryManager(db_path=":memory:")
+
+    with patch.object(ThinkingEngine, "run", return_value=None) as mock_run:
+        manager.start_thinking(interval=1, llm_name="openai")
+        mock_run.assert_called_once()
+        _, kwargs = mock_run.call_args
+        assert kwargs.get("llm_name") == "openai"
