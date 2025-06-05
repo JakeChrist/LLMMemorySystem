@@ -156,6 +156,46 @@ def test_start_dream_blocks_until_interrupt(monkeypatch):
     scheduler.stop.assert_called_once()
 
 
+def test_start_and_stop_thinking(monkeypatch):
+    manager = MagicMock()
+    scheduler = MagicMock()
+    manager.start_thinking.return_value = scheduler
+
+    monkeypatch.setattr(memory_cli.time, "sleep", lambda *_: (_ for _ in ()).throw(KeyboardInterrupt()))
+    memory_cli.start_think(manager, interval=5)
+
+    manager.start_thinking.assert_called_once_with(interval=5, llm_name="local")
+    scheduler.stop.assert_called_once()
+    memory_cli.stop_think(manager)
+    manager.stop_thinking.assert_called_once()
+
+
+def test_start_think_blocks_until_interrupt(monkeypatch):
+    manager = MagicMock()
+    scheduler = MagicMock()
+    manager.start_thinking.return_value = scheduler
+
+    stop_event = threading.Event()
+    orig_sleep = time.sleep
+
+    def fake_sleep(_):
+        if stop_event.is_set():
+            raise KeyboardInterrupt()
+        orig_sleep(0.01)
+
+    monkeypatch.setattr(memory_cli.time, "sleep", fake_sleep)
+
+    t = threading.Thread(target=memory_cli.start_think, args=(manager,))
+    t.start()
+    orig_sleep(0.05)
+    assert t.is_alive()
+    stop_event.set()
+    t.join(timeout=1)
+    assert not t.is_alive()
+
+    scheduler.stop.assert_called_once()
+
+
 def test_reset_database_clears_all_categories(tmp_path):
     db = Database(tmp_path / "mem.db")
 
