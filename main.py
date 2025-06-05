@@ -59,7 +59,13 @@ def main(argv: list[str] | None = None) -> None:
         from core.agent import Agent
 
         agent = Agent(args.llm, db_path=args.db)
-        run_gui(agent)
+        # Start background dreaming when launching the GUI so that summaries
+        # accumulate automatically while the interface is open.
+        scheduler = agent.memory.start_dreaming()
+        try:
+            run_gui(agent)
+        finally:
+            scheduler.stop()
     else:  # repl
         run_repl(args.llm, args.db)
 

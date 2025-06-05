@@ -43,7 +43,10 @@ python main.py repl --llm openai
 python main.py gui  --llm local
 ```
 
-The REPL mode starts a simple console conversation loop.  The GUI mode launches the PyQt5 interface defined in `gui/qt_interface.py`.
+The REPL mode starts a simple console conversation loop.  The GUI mode launches
+the PyQt5 interface defined in `gui/qt_interface.py`. When the GUI is opened the
+agent automatically starts the background dreaming scheduler so that memory
+summaries accumulate until the window is closed.
 
 ## Requirements
 
