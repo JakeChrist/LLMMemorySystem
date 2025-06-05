@@ -26,6 +26,7 @@ class DreamEngine:
         *,
         llm_name: str = "local",
         semantic: SemanticMemory | None = None,
+        log: bool = False,
     ) -> str:
         """Return a concise dream summary using the configured LLM.
 
@@ -37,6 +38,8 @@ class DreamEngine:
             Identifier of the LLM backend to use.
         semantic:
             Optional semantic memory store to persist the summary.
+        log:
+            If ``True``, log the produced summary using :class:`ms_utils.logger.Logger`.
         """
 
         lines = [m.content for m in memories]
@@ -49,7 +52,8 @@ class DreamEngine:
         summary = "Dream: " + summary
         if semantic is not None:
             semantic.add(summary)
-        logger.info(summary)
+        if log:
+            logger.info(summary)
         return summary
 
     def run(
@@ -86,6 +90,7 @@ class DreamEngine:
                     recent,
                     llm_name=llm_name,
                     semantic=manager.semantic if store_semantic else None,
+                    log=False,
                 )
                 manager.add(summary)
             manager.prune(max_entries)
