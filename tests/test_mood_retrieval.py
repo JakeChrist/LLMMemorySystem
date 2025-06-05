@@ -15,5 +15,5 @@ def test_agent_passes_mood_to_retriever():
         with patch("retrieval.retriever.Retriever.query", return_value=[]) as mock_q:
             agent = Agent("local")
             agent.receive("I am thrilled")
-            args, _ = mock_q.call_args
-            assert "mood:positive" in args[0]
+            _, kwargs = mock_q.call_args
+            assert kwargs.get("mood") == "positive"

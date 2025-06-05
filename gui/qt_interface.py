@@ -113,7 +113,7 @@ class MemorySystemGUI(QWidget):
 
             cue = build_cue(user_input, state={"mood": self.agent.mood})
             retriever = Retriever(self.agent.memory.all())
-            retrieved = retriever.query(cue, top_k=5)
+            retrieved = retriever.query(cue, top_k=5, mood=self.agent.mood)
             context = [m.content for m in retrieved]
             working = self.agent.working_memory()
             dream_entries = [

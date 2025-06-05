@@ -34,7 +34,7 @@ class Agent:
 
         cue = build_cue(text, state={"mood": self.mood})
         retriever = Retriever(self.memory.all())
-        retrieved = retriever.query(cue, top_k=5)
+        retrieved = retriever.query(cue, top_k=5, mood=self.mood)
         reconstructor = Reconstructor()
         context = reconstructor.build_context(retrieved, mood=self.mood)
 
