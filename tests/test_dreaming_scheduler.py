@@ -8,8 +8,9 @@ from core.memory_manager import MemoryManager
 from dreaming.dream_engine import DreamEngine
 
 
-def test_dream_run_summarizes_and_prunes():
-    manager = MemoryManager(db_path=":memory:")
+def test_dream_run_summarizes_and_prunes(tmp_path):
+    path = tmp_path / "mem.db"
+    manager = MemoryManager(db_path=path)
     for i in range(7):
         manager.add(f"event {i}")
 
@@ -35,6 +36,10 @@ def test_dream_run_summarizes_and_prunes():
     assert len(mems) == 5
     assert any("Dream:" in m.content for m in mems)
     assert manager.semantic.all()
+
+    reloaded = MemoryManager(db_path=path)
+    sem_entries = [m.content for m in reloaded.semantic.all()]
+    assert any("Dream:" in s for s in sem_entries)
 
 
 def test_manager_start_dreaming_uses_engine():

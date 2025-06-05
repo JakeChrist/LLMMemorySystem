@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 from core import emotion_model
 from dreaming.dream_engine import DreamEngine
 from core.memory_entry import MemoryEntry
-from core.memory_types.semantic import SemanticMemory
+from core.memory_manager import MemoryManager
 from datetime import datetime
 
 
@@ -22,7 +22,7 @@ def test_analyze_emotions_positive():
         assert isinstance(result[0][1], float)
 
 
-def test_dream_engine_summarize():
+def test_dream_engine_summarize(tmp_path):
     engine = DreamEngine()
     mems = [MemoryEntry(content="a cat", embedding=[], timestamp=datetime.utcnow())]
 
@@ -30,9 +30,12 @@ def test_dream_engine_summarize():
         mock_llm = MagicMock()
         mock_llm.generate.return_value = "summary"
         mock_get.return_value = mock_llm
-        sem = SemanticMemory()
-        summary = engine.summarize(mems, semantic=sem)
+        manager = MemoryManager(db_path=tmp_path / "mem.db")
+        summary = engine.summarize(mems, semantic=manager.semantic, manager=manager)
 
     mock_get.assert_called_once_with("local")
     assert summary == "Dream: summary"
-    assert sem.all()[0].content == summary
+    assert manager.semantic.all()[0].content == summary
+
+    reloaded = MemoryManager(db_path=tmp_path / "mem.db")
+    assert any(m.content == summary for m in reloaded.semantic.all())
