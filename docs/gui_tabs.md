@@ -6,7 +6,7 @@ The Qt GUI groups output into six tabs using a ``QTabWidget``:
 - **Dreaming** – shows bubbles for background dream summaries when the DreamEngine triggers.
 - **Thoughts** – displays introspection results from the ThinkingEngine.
 - **Memories** – lists the agent's current working memory and retrieved context after each user submission.
-- **Browse** – shows all stored episodic memories in a table view.
+- **Browse** – shows all stored memories in a table view.
 - **Import** – preview and load transcript or biography files into memory.
 
 The Import tab offers **Choose Transcript** and **Choose Biography** buttons

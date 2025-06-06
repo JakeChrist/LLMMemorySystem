@@ -73,6 +73,15 @@ class MemoryManager:
     def all(self) -> List[MemoryEntry]:
         return self.episodic.all()
 
+    def all_memories(self) -> List[MemoryEntry]:
+        """Return episodic, semantic and procedural memories sorted by timestamp."""
+        entries = (
+            list(self.episodic.all())
+            + list(self.semantic.all())
+            + list(self.procedural.all())
+        )
+        return sorted(entries, key=lambda m: m.timestamp)
+
     def prune(self, max_entries: int) -> None:
         """Remove oldest episodic memories beyond ``max_entries``."""
         self.episodic.prune(max_entries)

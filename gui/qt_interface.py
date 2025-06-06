@@ -67,12 +67,12 @@ class MemoryBrowser(QDialog):
 
     def refresh(self) -> None:
         self.list.clear()
-        for mem in self.manager.all():
+        for mem in self.manager.all_memories():
             text = f"{mem.timestamp.isoformat()} - {mem.content[:30]}"
             self.list.addItem(text)
 
     def display_memory(self, row: int) -> None:
-        entries = self.manager.all()
+        entries = self.manager.all_memories()
         if 0 <= row < len(entries):
             self.current = entries[row]
             self.detail.setPlainText(entries[row].content)
@@ -85,13 +85,23 @@ class MemoryBrowser(QDialog):
             return
         new_text = self.detail.toPlainText()
         if new_text != self.current.content:
-            self.manager.update(self.current, new_text)
+            if self.current in self.manager.semantic._entries:
+                self.manager.update_semantic(self.current, new_text)
+            elif self.current in self.manager.procedural._entries:
+                self.manager.update_procedural(self.current, new_text)
+            else:
+                self.manager.update(self.current, new_text)
             self.refresh()
 
     def delete_current(self) -> None:
         if self.current is None:
             return
-        self.manager.delete(self.current)
+        if self.current in self.manager.semantic._entries:
+            self.manager.delete_semantic(self.current)
+        elif self.current in self.manager.procedural._entries:
+            self.manager.delete_procedural(self.current)
+        else:
+            self.manager.delete(self.current)
         self.current = None
         self.refresh()
 
@@ -396,6 +406,10 @@ class MemorySystemGUI(QWidget):
         QTimer.singleShot(0, lambda: self._scroll_to_bottom(self.memory_scroll))
 
     def _memory_type(self, mem: MemoryEntry) -> str:
+        if mem in self.agent.memory.semantic._entries:
+            return "semantic"
+        if mem in self.agent.memory.procedural._entries:
+            return "procedural"
         if "introspection" in mem.metadata.get("tags", []):
             return "thought"
         if mem.content.startswith("Dream:"):
@@ -408,7 +422,7 @@ class MemorySystemGUI(QWidget):
         if not self.agent:
             self.table.setRowCount(0)
             return
-        entries = self.agent.memory.all()
+        entries = self.agent.memory.all_memories()
         self.table.setRowCount(len(entries))
         for row, mem in enumerate(entries):
             self.table.setItem(row, 0, QTableWidgetItem(mem.timestamp.isoformat()))
@@ -436,7 +450,7 @@ class MemorySystemGUI(QWidget):
             self.countdown_label.setText(" | ".join(parts))
 
         dream_entries = [
-            m for m in self.agent.memory.all()
+            m for m in self.agent.memory.all_memories()
             if m.content.startswith("Dream:")
         ]
         if dream_entries:
@@ -447,7 +461,7 @@ class MemorySystemGUI(QWidget):
 
         think_entries = [
             m
-            for m in self.agent.memory.all()
+            for m in self.agent.memory.all_memories()
             if "introspection" in m.metadata.get("tags", [])
         ]
         if think_entries:
@@ -456,7 +470,7 @@ class MemorySystemGUI(QWidget):
                 self.add_thought_message(latest_think.content)
                 self._last_think = latest_think
 
-        entries = self.agent.memory.all()
+        entries = self.agent.memory.all_memories()
         if len(entries) != self._mem_count:
             self._mem_count = len(entries)
             self.refresh_memory_table()
@@ -576,7 +590,9 @@ class MemorySystemGUI(QWidget):
         if context:
             mem_text += "\n\nRetrieved:\n" + format_context(context)
         self.add_memory_message(mem_text)
-        self._mem_count = len(self.agent.memory.all()) if self.agent else 0
+        self._mem_count = (
+            len(self.agent.memory.all_memories()) if self.agent else 0
+        )
         self.refresh_memory_table()
 
 

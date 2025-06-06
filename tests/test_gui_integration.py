@@ -409,3 +409,61 @@ def test_import_preview_shows(tmp_path, monkeypatch):
     assert "Born 1990" in gui.preview.toPlainText()
 
     app.quit()
+
+
+def test_memory_table_shows_all_memory_types(tmp_path):
+    app = QApplication.instance() or QApplication([])
+
+    manager = MemoryManager(db_path=tmp_path / "mem.db")
+    manager.add_semantic("fact")
+    manager.add_procedural("skill")
+
+    agent = MagicMock()
+    agent.memory = manager
+
+    gui = MemorySystemGUI(agent)
+    gui.refresh_memory_table()
+
+    assert gui.table.rowCount() == len(manager.all_memories())
+    types = {gui.table.item(i, 1).text() for i in range(gui.table.rowCount())}
+    assert {"semantic", "procedural"} <= types
+
+    app.quit()
+
+
+def test_memory_browser_edits_and_deletes_non_episodic(tmp_path, monkeypatch):
+    app = QApplication.instance() or QApplication([])
+
+    manager = MemoryManager(db_path=tmp_path / "mem.db")
+    sem = manager.add_semantic("fact")
+    proc = manager.add_procedural("skill")
+
+    agent = MagicMock()
+    agent.memory = manager
+
+    gui = MemorySystemGUI(agent)
+
+    class FakeBrowser:
+        def __init__(self, mgr):
+            self.manager = mgr
+            self.list = QListWidget()
+            self.row = None
+
+        def display_memory(self, row):
+            self.row = row
+
+        def exec(self):
+            if self.row == 0:
+                self.manager.update_semantic(sem, "better fact")
+            else:
+                self.manager.delete_procedural(proc)
+
+    monkeypatch.setattr(gui_mod, "MemoryBrowser", FakeBrowser)
+
+    gui.open_memory_dialog(0, 0)
+    assert gui.table.item(0, 4).text() == "better fact"
+
+    gui.open_memory_dialog(1, 0)
+    assert gui.table.rowCount() == 1
+
+    app.quit()
