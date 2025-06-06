@@ -9,8 +9,12 @@ class BaseLLM(ABC):
     """Base class that all model wrappers must implement."""
 
     @abstractmethod
-    def generate(self, prompt: str) -> str:
-        """Generate a completion for the given prompt."""
+    def generate(self, prompt: str | list[dict[str, str]]) -> str:
+        """Generate a completion for ``prompt``.
+
+        ``prompt`` may be a plain string or a list of role/content
+        dictionaries following the OpenAI chat format.
+        """
         raise NotImplementedError
 
 

@@ -57,17 +57,23 @@ class LMStudioBackend(BaseLLM):
         else:
             self.timeout = timeout
 
-    def generate(self, prompt: str) -> str:
+    def generate(self, prompt: str | list[dict[str, str]]) -> str:
         """Generate a completion for ``prompt`` using the LMStudio server."""
 
         if requests is None:
             return "LMStudio backend unavailable."
+
+        if isinstance(prompt, list):
+            messages = prompt
+        else:
+            messages = [{"role": "user", "content": prompt}]
+
         try:
             resp = requests.post(
                 self.url,
                 json={
                     "model": self.model,
-                    "messages": [{"role": "user", "content": prompt}],
+                    "messages": messages,
                 },
                 timeout=self.timeout,
             )

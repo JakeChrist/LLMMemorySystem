@@ -22,18 +22,27 @@ class OpenAIBackend(BaseLLM):
         if openai is not None and self.api_key:
             openai.api_key = self.api_key
 
-    def generate(self, prompt: str) -> str:
+    def generate(self, prompt: str | list[dict[str, str]]) -> str:
+        """Return a completion for ``prompt`` using the OpenAI API."""
+
         if openai is None:
             return "OpenAI backend unavailable."
+
+        if isinstance(prompt, list):
+            messages = prompt
+        else:
+            messages = [{"role": "user", "content": prompt}]
+
         if hasattr(openai, "chat"):
             resp: Any = openai.chat.completions.create(
                 model=self.model,
-                messages=[{"role": "user", "content": prompt}],
+                messages=messages,
             )
             return resp.choices[0].message.content.strip()
+
         resp: Any = openai.ChatCompletion.create(
             model=self.model,
-            messages=[{"role": "user", "content": prompt}],
+            messages=messages,
         )
         return resp["choices"][0]["message"]["content"].strip()
 

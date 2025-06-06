@@ -70,7 +70,17 @@ class ThinkingEngine:
         context = reconstructor.build_context(memories, mood=mood)
         full_prompt = f"{context}\n{prompt}" if context else prompt
         llm = llm_router.get_llm(llm_name)
-        thought = llm.generate(full_prompt).strip()
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are thinking internally. Respond with a single "
+                    "first-person thought without addressing anyone as 'you'."
+                ),
+            },
+            {"role": "user", "content": full_prompt},
+        ]
+        thought = llm.generate(messages).strip()
         emotions = analyze_emotions(thought)
         if emotions:
             mood = emotions[0][0]

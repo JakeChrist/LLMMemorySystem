@@ -25,10 +25,18 @@ class GeminiBackend(BaseLLM):
         else:  # pragma: no cover - degrade gracefully
             self.model = None
 
-    def generate(self, prompt: str) -> str:
+    def generate(self, prompt: str | list[dict[str, str]]) -> str:
+        """Generate a completion using the Gemini API."""
+
         if self.model is None:
             return "Gemini backend unavailable."
-        resp: Any = self.model.generate_content(prompt)
+
+        if isinstance(prompt, list):
+            text = "\n".join(m.get("content", "") for m in prompt)
+        else:
+            text = prompt
+
+        resp: Any = self.model.generate_content(text)
         return getattr(resp, "text", str(resp)).strip()
 
 
