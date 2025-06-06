@@ -37,3 +37,10 @@ def test_build_context_includes_mood_and_metadata():
     assert lines[0] == "Mood: happy; loc: home"
     assert lines[1] == "hello"
 
+
+def test_default_max_context_length_allows_long_text():
+    long_text = "x" * 500
+    entry = MemoryEntry(content=long_text, embedding=[], timestamp=datetime.utcnow())
+    context = Reconstructor().build_context([entry])
+    assert context == long_text
+
