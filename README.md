@@ -36,6 +36,17 @@ stop-dream
 `stop-dream` command only works when the dreaming scheduler is started
 programmatically in the same process.
 
+To ingest archived conversations or biographies into an agent database use the
+import helpers:
+
+```bash
+python main.py cli add-conversation transcript.txt --agent Thorne
+python main.py cli add-biography bio.txt --agent Thorne
+```
+
+See [docs/memory_constructor.md](docs/memory_constructor.md) for a detailed
+description of the ingestion process and GUI options.
+
 ### REPL and GUI
 
 ```
