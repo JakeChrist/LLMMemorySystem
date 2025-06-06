@@ -258,9 +258,9 @@ def import_biography(path: str, agent: str) -> None:
     manager = MemoryManager(f"{agent}.db")
     with open(path, "r", encoding="utf-8") as fh:
         text = fh.read()
-    sem, proc = memory_constructor.ingest_biography(text, manager)
+    sem, episodic, proc = memory_constructor.ingest_biography(text, manager)
     logger.info(
-        f"Added 0 episodic, {len(sem)} semantic, {len(proc)} procedural entries."
+        f"Added {len(episodic)} episodic, {len(sem)} semantic, {len(proc)} procedural entries."
     )
 
 

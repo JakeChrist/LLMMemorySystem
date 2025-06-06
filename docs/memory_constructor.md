@@ -28,8 +28,9 @@ preview the lines and press **Import** to ingest them.
 ## Biography workflow
 
 1. Split the biography into sentences.
-2. Sentences describing a skill are stored as procedural memory; others become
-   semantic entries.
+2. Sentences describing a skill are stored in procedural memory.
+3. Sentences mentioning specific events or dates are saved as episodic memories.
+4. All remaining sentences become semantic entries.
 
 ```python
 from addons.memory_constructor import ingest_biography

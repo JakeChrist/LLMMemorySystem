@@ -39,10 +39,11 @@ def test_ingest_biography(monkeypatch):
         'He learned to swim at age 5. '
         'He works as a baker.'
     )
-    sem, proc = memory_constructor.ingest_biography(bio, manager)
+    sem, epis, proc = memory_constructor.ingest_biography(bio, manager)
 
-    assert len(sem) == 2
+    assert len(sem) == 1
+    assert len(epis) == 1
     assert len(proc) == 1
-    for entry in sem + proc:
+    for entry in sem + epis + proc:
         assert entry.metadata['source'] == 'biography'
     assert proc[0] in manager.procedural.all()
