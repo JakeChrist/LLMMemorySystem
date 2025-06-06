@@ -8,6 +8,7 @@ from ms_utils import format_context, Scheduler
 import time
 from llm import llm_router
 from ms_utils.logger import Logger
+from core.emotion_model import analyze_emotions
 
 logger = Logger(__name__)
 from core.memory_types.semantic import SemanticMemory
@@ -28,7 +29,7 @@ class DreamEngine:
         semantic: SemanticMemory | None = None,
         manager: "MemoryManager" | None = None,
         log: bool = False,
-    ) -> str:
+    ) -> tuple[str, list[str], dict[str, float]]:
         """Return a concise dream summary using the configured LLM.
 
         Parameters
@@ -54,14 +55,19 @@ class DreamEngine:
         llm = llm_router.get_llm(llm_name)
         summary = llm.generate(prompt).strip()
         summary = "Dream: " + summary
+        emotions = analyze_emotions(summary)
+        labels = [e[0] for e in emotions]
+        scores = {lbl: score for lbl, score in emotions}
         if semantic is not None:
             if manager is not None:
-                manager.add_semantic(summary)
+                manager.add_semantic(
+                    summary, emotions=labels, emotion_scores=scores
+                )
             else:
-                semantic.add(summary)
+                semantic.add(summary, emotions=labels, emotion_scores=scores)
         if log:
             logger.info(summary)
-        return summary
+        return summary, labels, scores
 
     def run(
         self,
@@ -93,14 +99,16 @@ class DreamEngine:
         def _task() -> None:
             recent = manager.all()[-summary_size:]
             if recent:
-                summary = self.summarize(
+                summary, labels, scores = self.summarize(
                     recent,
                     llm_name=llm_name,
                     semantic=manager.semantic if store_semantic else None,
                     manager=manager if store_semantic else None,
                     log=False,
                 )
-                manager.add(summary)
+                manager.add(
+                    summary, emotions=labels, emotion_scores=scores
+                )
             manager.prune(max_entries)
             manager._next_dream_time = time.monotonic() + interval
 

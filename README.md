@@ -103,3 +103,7 @@ retriever = Retriever([m1, m2])
 top = retriever.query("toy", mood="sad")[0]
 print(top.content)  # -> "lost my toy"
 ```
+
+All user messages, assistant replies, introspective thoughts and dream
+summaries are analyzed for emotional tone.  The detected labels and
+scores are stored with each memory entry.

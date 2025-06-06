@@ -31,10 +31,13 @@ def test_dream_engine_summarize(tmp_path):
         mock_llm.generate.return_value = "summary"
         mock_get.return_value = mock_llm
         manager = MemoryManager(db_path=tmp_path / "mem.db")
-        summary = engine.summarize(mems, semantic=manager.semantic, manager=manager)
+        summary, labels, scores = engine.summarize(
+            mems, semantic=manager.semantic, manager=manager
+        )
 
     mock_get.assert_called_once_with("local")
     assert summary == "Dream: summary"
+    assert labels and scores
     assert manager.semantic.all()[0].content == summary
 
     reloaded = MemoryManager(db_path=tmp_path / "mem.db")
