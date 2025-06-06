@@ -357,6 +357,40 @@ def test_import_calls_constructor(tmp_path, monkeypatch):
     app.quit()
 
 
+def test_import_biography_calls_constructor(tmp_path, monkeypatch):
+    app = QApplication.instance() or QApplication([])
+
+    agent = MagicMock()
+    agent.memory = MemoryManager(db_path=tmp_path / "bio.db")
+
+    bio = tmp_path / "bio.txt"
+    bio.write_text("Born 1990. Learned to swim.")
+
+    monkeypatch.setattr(
+        gui_mod.QFileDialog,
+        "getOpenFileName",
+        lambda *a, **k: (str(bio), ""),
+    )
+
+    called = {}
+
+    def fake_ingest(text, manager):
+        called["text"] = text
+        called["manager"] = manager
+        return [], []
+
+    monkeypatch.setattr(memory_constructor, "ingest_biography", fake_ingest)
+
+    gui = MemorySystemGUI(agent)
+    gui.bio_btn.click()
+    gui.import_btn.click()
+
+    assert called["text"] == bio.read_text()
+    assert called["manager"] is agent.memory
+
+    app.quit()
+
+
 def test_import_preview_shows(tmp_path, monkeypatch):
     app = QApplication.instance() or QApplication([])
 
