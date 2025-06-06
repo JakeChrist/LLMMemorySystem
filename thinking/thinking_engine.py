@@ -11,6 +11,7 @@ from retrieval.retriever import Retriever
 from reconstruction.reconstructor import Reconstructor
 from llm import llm_router
 from ms_utils import Scheduler
+from core.emotion_model import analyze_emotions
 
 if TYPE_CHECKING:  # pragma: no cover - for type hints only
     from core.memory_manager import MemoryManager
@@ -70,8 +71,14 @@ class ThinkingEngine:
         full_prompt = f"{context}\n{prompt}" if context else prompt
         llm = llm_router.get_llm(llm_name)
         thought = llm.generate(full_prompt).strip()
+        emotions = analyze_emotions(thought)
+        if emotions:
+            mood = emotions[0][0]
         entry = manager.add(
-            thought, metadata={"prompt": prompt, "tags": ["introspection"]}
+            thought,
+            emotions=[e[0] for e in emotions],
+            emotion_scores={lbl: score for lbl, score in emotions},
+            metadata={"prompt": prompt, "tags": ["introspection"]},
         )
         return thought
 

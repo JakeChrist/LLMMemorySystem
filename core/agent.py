@@ -52,5 +52,14 @@ class Agent:
 
         prompt = f"{context}\nUser: {text}" if context else text
         response = self.llm.generate(prompt)
-        self.memory.add(response, metadata={"role": "assistant"})
+        resp_emotions = analyze_emotions(response)
+        if resp_emotions:
+            self.mood = resp_emotions[0][0]
+
+        self.memory.add(
+            response,
+            emotions=[e[0] for e in resp_emotions],
+            emotion_scores={lbl: score for lbl, score in resp_emotions},
+            metadata={"role": "assistant"},
+        )
         return response
