@@ -1,9 +1,10 @@
 # GUI Scheduler Settings
 
-The Qt interface includes a **Settings** dialog allowing you to tweak the idle
-thresholds used by the `CognitiveScheduler`.
+The Qt interface features a menu bar containing a **Settings** action that opens
+a dialog to tweak the idle thresholds used by the `CognitiveScheduler`.
 
-Open the dialog using the *Settings* button next to **Browse Memories**. The
+Use the *Settings* action in the window's menu bar to open the dialog. Older
+versions exposed a separate Settings button next to **Browse Memories**. The
 fields correspond to:
 
 - `T_think` – seconds of inactivity before background thinking starts.

@@ -15,6 +15,8 @@ from PyQt5.QtWidgets import (
     QDoubleSpinBox,
     QFormLayout,
     QListWidget,
+    QMenuBar,
+    QAction,
 )
 from PyQt5.QtCore import Qt, QTimer
 import sys
@@ -174,6 +176,12 @@ class MemorySystemGUI(QWidget):
         self.setWindowTitle("LLMemory Agent Interface")
         self.resize(900, 600)
 
+        # Menu bar with application actions
+        self.menu_bar = QMenuBar(self)
+        self.settings_action = QAction("Settings", self)
+        self.settings_action.triggered.connect(self.show_settings)
+        self.menu_bar.addAction(self.settings_action)
+
         # Conversation area
         self.chat_widget = QWidget()
         self.chat_layout = QVBoxLayout()
@@ -231,10 +239,6 @@ class MemorySystemGUI(QWidget):
         self.mem_button.clicked.connect(self.show_memories)
         btn_row.addWidget(self.mem_button)
 
-        self.settings_button = QPushButton("Settings")
-        self.settings_button.clicked.connect(self.show_settings)
-        btn_row.addWidget(self.settings_button)
-
         right_panel.addLayout(btn_row)
 
         # Input bar
@@ -263,6 +267,7 @@ class MemorySystemGUI(QWidget):
         splitter.setStretchFactor(1, 0)
 
         main_column = QVBoxLayout()
+        main_column.setMenuBar(self.menu_bar)
         main_column.addWidget(splitter)
         main_column.addLayout(input_layout)
 

@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import pytest
 
 PyQt5 = pytest.importorskip("PyQt5")
-from PyQt5.QtWidgets import QApplication, QLabel, QDialog
+from PyQt5.QtWidgets import QApplication, QLabel, QDialog, QMenuBar
 from llm.lmstudio_api import LMStudioBackend
 
 from gui.qt_interface import MemorySystemGUI, MemoryBrowser
@@ -194,6 +194,7 @@ def test_settings_dialog_updates_scheduler(monkeypatch):
     scheduler.notify_input = MagicMock()
 
     gui = MemorySystemGUI(None, scheduler=scheduler)
+    assert isinstance(gui.menu_bar, QMenuBar)
 
     class FakeDialog:
         def __init__(self, sched):
@@ -207,7 +208,7 @@ def test_settings_dialog_updates_scheduler(monkeypatch):
 
     monkeypatch.setattr(gui_mod, "SchedulerSettingsDialog", FakeDialog)
 
-    gui.show_settings()
+    gui.settings_action.trigger()
 
     assert scheduler.T_think == 1.0
     assert scheduler.T_dream == 2.0
@@ -231,6 +232,7 @@ def test_settings_dialog_updates_lmstudio_timeout(monkeypatch):
     scheduler.agent = agent
 
     gui = MemorySystemGUI(agent, scheduler=scheduler)
+    assert isinstance(gui.menu_bar, QMenuBar)
 
     class FakeDialog:
         def __init__(self, sched):
@@ -245,7 +247,7 @@ def test_settings_dialog_updates_lmstudio_timeout(monkeypatch):
     monkeypatch.setattr(gui_mod, "SchedulerSettingsDialog", FakeDialog)
 
     monkeypatch.setenv("LMSTUDIO_TIMEOUT", "15")
-    gui.show_settings()
+    gui.settings_action.trigger()
 
     assert scheduler.T_think == 1.0
     assert scheduler.T_dream == 2.0
