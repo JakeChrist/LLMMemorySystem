@@ -18,6 +18,7 @@ from dreaming.dream_engine import DreamEngine
 from core.memory_manager import MemoryManager
 from retrieval.retriever import Retriever
 from storage.db_interface import Database
+from addons import memory_constructor
 
 
 def list_memories(db: Database) -> None:
@@ -241,6 +242,28 @@ def delete_proc(db: Database, timestamp: str, *, assume_yes: bool = False) -> No
     logger.info("Procedural memory deleted.")
 
 
+def import_conversation(path: str, agent: str) -> None:
+    """Import dialogue transcript from ``path`` for ``agent``."""
+    manager = MemoryManager(f"{agent}.db")
+    with open(path, "r", encoding="utf-8") as fh:
+        text = fh.read()
+    episodic = memory_constructor.ingest_transcript(text, manager)
+    logger.info(
+        f"Added {len(episodic)} episodic, 0 semantic, 0 procedural entries."
+    )
+
+
+def import_biography(path: str, agent: str) -> None:
+    """Import biography text from ``path`` for ``agent``."""
+    manager = MemoryManager(f"{agent}.db")
+    with open(path, "r", encoding="utf-8") as fh:
+        text = fh.read()
+    sem, proc = memory_constructor.ingest_biography(text, manager)
+    logger.info(
+        f"Added 0 episodic, {len(sem)} semantic, {len(proc)} procedural entries."
+    )
+
+
 def start_dream(manager: MemoryManager, *, interval: float = 60.0, llm: str = "local") -> None:
     """Begin periodic dreaming using ``MemoryManager`` and block until interrupted."""
     scheduler = manager.start_dreaming(interval=interval, llm_name=llm)
@@ -396,6 +419,20 @@ def main(argv: list[str] | None = None) -> None:
         "timestamp", help="Timestamp of procedural memory to delete"
     )
 
+    conv_p = sub.add_parser(
+        "add-conversation",
+        help="Import conversation transcript as episodic memories",
+    )
+    conv_p.add_argument("file", help="Text file containing transcript")
+    conv_p.add_argument("--agent", required=True, help="Agent name")
+
+    bio_p = sub.add_parser(
+        "add-biography",
+        help="Import biography text into semantic/procedural memory",
+    )
+    bio_p.add_argument("file", help="Text file containing biography")
+    bio_p.add_argument("--agent", required=True, help="Agent name")
+
     args = parser.parse_args(argv)
 
     db = Database(args.db)
@@ -444,6 +481,10 @@ def main(argv: list[str] | None = None) -> None:
         edit_proc(db, args.timestamp, args.text)
     elif args.cmd == "delete-proc":
         delete_proc(db, args.timestamp)
+    elif args.cmd == "add-conversation":
+        import_conversation(args.file, args.agent)
+    elif args.cmd == "add-biography":
+        import_biography(args.file, args.agent)
 
 
 if __name__ == "__main__":
