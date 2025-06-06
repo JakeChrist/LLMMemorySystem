@@ -28,7 +28,6 @@ def test_gui_handle_submit_updates_panels():
     mock_agent = MagicMock()
     mock_agent.receive.return_value = "reply"
     mock_agent.working_memory.return_value = ["fact1", "fact2"]
-    mock_agent.mood = "happy"
     mock_agent.memory.all.return_value = [
         MemoryEntry(content="Dream: something", embedding=[], timestamp=datetime.utcnow())
     ]
@@ -44,11 +43,10 @@ def test_gui_handle_submit_updates_panels():
             assert q_kwargs.get("tags") == ["greeting"]
 
     assert mock_agent.receive.called
-    bubbles = gui.chat_widget.findChildren(QLabel)
+    bubbles = gui.dialogue_scroll.widget().findChildren(QLabel)
     assert bubbles[-1].text() == "reply"
-    assert "fact1" in gui.memory_box.toPlainText()
-    assert "happy" in gui.mood_box.toPlainText()
-    assert "Dream:" in gui.dream_box.toPlainText()
+    mem_bubbles = gui.memory_scroll.widget().findChildren(QLabel)
+    assert "fact1" in mem_bubbles[-1].text()
 
     app.quit()
 
@@ -91,7 +89,8 @@ def test_update_countdown_refreshes_dream_box():
 
     gui.update_countdown()
 
-    assert "Dream: second" in gui.dream_box.toPlainText()
+    dream_bubbles = gui.dream_scroll.widget().findChildren(QLabel)
+    assert "Dream: second" in dream_bubbles[-1].text()
     label = gui.countdown_label.text()
     assert "D:10s" in label
     assert "T:5s" in label
@@ -131,7 +130,8 @@ def test_update_countdown_refreshes_think_box():
 
     gui.update_countdown()
 
-    assert "thought2" in gui.think_box.toPlainText()
+    thought_bubbles = gui.thought_scroll.widget().findChildren(QLabel)
+    assert "thought2" in thought_bubbles[-1].text()
     label = gui.countdown_label.text()
     assert "T:7s" in label
 
@@ -160,7 +160,8 @@ def test_think_once_updates_gui(tmp_path):
 
     gui.update_countdown()
 
-    assert "new thought" in gui.think_box.toPlainText()
+    thought_bubbles = gui.thought_scroll.widget().findChildren(QLabel)
+    assert "new thought" in thought_bubbles[-1].text()
 
     app.quit()
 

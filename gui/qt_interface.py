@@ -17,6 +17,7 @@ from PyQt5.QtWidgets import (
     QListWidget,
     QMenuBar,
     QAction,
+    QTabWidget,
 )
 from PyQt5.QtCore import Qt, QTimer
 import sys
@@ -182,54 +183,77 @@ class MemorySystemGUI(QWidget):
         self.settings_action.triggered.connect(self.show_settings)
         self.menu_bar.addAction(self.settings_action)
 
-        # Conversation area
-        self.chat_widget = QWidget()
-        self.chat_layout = QVBoxLayout()
-        self.chat_layout.addStretch()
-        self.chat_widget.setLayout(self.chat_layout)
+        # Tabbed conversation area
+        self.tabs = QTabWidget()
 
-        self.chat_scroll = QScrollArea()
-        self.chat_scroll.setWidgetResizable(True)
-        self.chat_scroll.setWidget(self.chat_widget)
+        # Dialogue tab
+        self.dialogue_layout = QVBoxLayout()
+        self.dialogue_layout.addStretch()
+        dialogue_container = QWidget()
+        dialogue_container.setLayout(self.dialogue_layout)
+        self.dialogue_scroll = QScrollArea()
+        self.dialogue_scroll.setWidgetResizable(True)
+        self.dialogue_scroll.setWidget(dialogue_container)
 
-        # Right Panel: State debug panel
+        self.input_box = QTextEdit()
+        self.input_box.setMaximumHeight(80)
+        self.submit_button = QPushButton("Send")
+        self.submit_button.clicked.connect(self.handle_submit)
+        input_layout = QHBoxLayout()
+        input_layout.addWidget(self.input_box)
+        input_layout.addWidget(self.submit_button)
+
+        dialogue_tab = QWidget()
+        d_layout = QVBoxLayout()
+        d_layout.addWidget(self.dialogue_scroll)
+        d_layout.addLayout(input_layout)
+        dialogue_tab.setLayout(d_layout)
+        self.tabs.addTab(dialogue_tab, "Dialogue")
+
+        # Dreaming tab
+        self.dream_layout = QVBoxLayout()
+        self.dream_layout.addStretch()
+        dream_container = QWidget()
+        dream_container.setLayout(self.dream_layout)
+        self.dream_scroll = QScrollArea()
+        self.dream_scroll.setWidgetResizable(True)
+        self.dream_scroll.setWidget(dream_container)
+        dream_tab = QWidget()
+        dream_layout = QVBoxLayout()
+        dream_layout.addWidget(self.dream_scroll)
+        dream_tab.setLayout(dream_layout)
+        self.tabs.addTab(dream_tab, "Dreaming")
+
+        # Thoughts tab
+        self.thought_layout = QVBoxLayout()
+        self.thought_layout.addStretch()
+        thought_container = QWidget()
+        thought_container.setLayout(self.thought_layout)
+        self.thought_scroll = QScrollArea()
+        self.thought_scroll.setWidgetResizable(True)
+        self.thought_scroll.setWidget(thought_container)
+        thought_tab = QWidget()
+        t_layout = QVBoxLayout()
+        t_layout.addWidget(self.thought_scroll)
+        thought_tab.setLayout(t_layout)
+        self.tabs.addTab(thought_tab, "Thoughts")
+
+        # Memories tab
+        self.memory_layout = QVBoxLayout()
+        self.memory_layout.addStretch()
+        memory_container = QWidget()
+        memory_container.setLayout(self.memory_layout)
+        self.memory_scroll = QScrollArea()
+        self.memory_scroll.setWidgetResizable(True)
+        self.memory_scroll.setWidget(memory_container)
+        memory_tab = QWidget()
+        m_layout = QVBoxLayout()
+        m_layout.addWidget(self.memory_scroll)
+        memory_tab.setLayout(m_layout)
+        self.tabs.addTab(memory_tab, "Memories")
+
+        # Right Panel: controls
         right_panel = QVBoxLayout()
-        right_panel.addWidget(QLabel("Working Memory"))
-        self.memory_box = QTextEdit()
-        self.memory_box.setReadOnly(True)
-        right_panel.addWidget(self.memory_box)
-
-        right_panel.addWidget(QLabel("Current Mood"))
-        self.mood_box = QTextEdit()
-        self.mood_box.setReadOnly(True)
-        right_panel.addWidget(self.mood_box)
-
-        right_panel.addWidget(QLabel("Dreaming Output"))
-        self.dream_box = QTextEdit()
-        self.dream_box.setReadOnly(True)
-        right_panel.addWidget(self.dream_box)
-        if self.agent:
-            dream_entries = [
-                m for m in self.agent.memory.all()
-                if m.content.startswith("Dream:")
-            ]
-            if dream_entries:
-                self._last_dream = dream_entries[-1]
-
-        right_panel.addWidget(QLabel("Thinking Output"))
-        self.think_box = QTextEdit()
-        self.think_box.setReadOnly(True)
-        right_panel.addWidget(self.think_box)
-        if self.agent:
-            think_entries = [
-                m
-                for m in self.agent.memory.all()
-                if "introspection" in m.metadata.get("tags", [])
-            ]
-            if think_entries:
-                self._last_think = think_entries[-1]
-                self.think_box.setPlainText(self._last_think.content)
-
         right_panel.addWidget(QLabel("Next Dream"))
         self.countdown_label = QLabel("")
         right_panel.addWidget(self.countdown_label)
@@ -241,27 +265,12 @@ class MemorySystemGUI(QWidget):
 
         right_panel.addLayout(btn_row)
 
-        # Input bar
-        self.input_box = QTextEdit()
-        self.input_box.setMaximumHeight(80)
-        self.submit_button = QPushButton("Send")
-        self.submit_button.clicked.connect(self.handle_submit)
-
-        input_layout = QHBoxLayout()
-        input_layout.addWidget(self.input_box)
-        input_layout.addWidget(self.submit_button)
-
         # Assemble into layout
-        chat_container = QWidget()
-        chat_layout = QVBoxLayout()
-        chat_layout.addWidget(self.chat_scroll)
-        chat_container.setLayout(chat_layout)
-
         right_widget = QWidget()
         right_widget.setLayout(right_panel)
 
         splitter = QSplitter(Qt.Horizontal)
-        splitter.addWidget(chat_container)
+        splitter.addWidget(self.tabs)
         splitter.addWidget(right_widget)
         splitter.setStretchFactor(0, 1)
         splitter.setStretchFactor(1, 0)
@@ -269,7 +278,6 @@ class MemorySystemGUI(QWidget):
         main_column = QVBoxLayout()
         main_column.setMenuBar(self.menu_bar)
         main_column.addWidget(splitter)
-        main_column.addLayout(input_layout)
 
         self.setLayout(main_column)
 
@@ -278,8 +286,8 @@ class MemorySystemGUI(QWidget):
         self.timer.timeout.connect(self.update_countdown)
         self.timer.start(1000)
 
-    def scroll_to_bottom(self):
-        bar = self.chat_scroll.verticalScrollBar()
+    def _scroll_to_bottom(self, scroll: QScrollArea) -> None:
+        bar = scroll.verticalScrollBar()
         bar.setValue(bar.maximum())
 
     def add_message(self, text: str, *, is_user: bool = True) -> None:
@@ -293,8 +301,46 @@ class MemorySystemGUI(QWidget):
             row.addStretch()
         container = QWidget()
         container.setLayout(row)
-        self.chat_layout.insertWidget(self.chat_layout.count() - 1, container)
-        QTimer.singleShot(0, self.scroll_to_bottom)
+        self.dialogue_layout.insertWidget(
+            self.dialogue_layout.count() - 1, container
+        )
+        QTimer.singleShot(0, lambda: self._scroll_to_bottom(self.dialogue_scroll))
+
+    def add_dream_message(self, text: str) -> None:
+        bubble = ChatBubble(text, is_user=False)
+        row = QHBoxLayout()
+        row.addWidget(bubble)
+        row.addStretch()
+        container = QWidget()
+        container.setLayout(row)
+        self.dream_layout.insertWidget(
+            self.dream_layout.count() - 1, container
+        )
+        QTimer.singleShot(0, lambda: self._scroll_to_bottom(self.dream_scroll))
+
+    def add_thought_message(self, text: str) -> None:
+        bubble = ChatBubble(text, is_user=False)
+        row = QHBoxLayout()
+        row.addWidget(bubble)
+        row.addStretch()
+        container = QWidget()
+        container.setLayout(row)
+        self.thought_layout.insertWidget(
+            self.thought_layout.count() - 1, container
+        )
+        QTimer.singleShot(0, lambda: self._scroll_to_bottom(self.thought_scroll))
+
+    def add_memory_message(self, text: str) -> None:
+        bubble = ChatBubble(text, is_user=False)
+        row = QHBoxLayout()
+        row.addWidget(bubble)
+        row.addStretch()
+        container = QWidget()
+        container.setLayout(row)
+        self.memory_layout.insertWidget(
+            self.memory_layout.count() - 1, container
+        )
+        QTimer.singleShot(0, lambda: self._scroll_to_bottom(self.memory_scroll))
 
     def update_countdown(self) -> None:
         if not self.agent:
@@ -319,7 +365,7 @@ class MemorySystemGUI(QWidget):
         if dream_entries:
             latest = dream_entries[-1]
             if latest is not self._last_dream:
-                self.dream_box.setPlainText(latest.content)
+                self.add_dream_message(latest.content)
                 self._last_dream = latest
 
         think_entries = [
@@ -330,7 +376,7 @@ class MemorySystemGUI(QWidget):
         if think_entries:
             latest_think = think_entries[-1]
             if latest_think is not self._last_think:
-                self.think_box.setPlainText(latest_think.content)
+                self.add_thought_message(latest_think.content)
                 self._last_think = latest_think
 
     def show_settings(self):
@@ -388,18 +434,6 @@ class MemorySystemGUI(QWidget):
             retrieved = retriever.query(cue, top_k=5, mood=self.agent.mood, tags=tags)
             context = [m.content for m in retrieved]
             working = self.agent.working_memory()
-            dream_entries = [
-                m
-                for m in self.agent.memory.all()
-                if m.content.startswith("Dream:")
-            ]
-            dreaming_entry = dream_entries[-1] if dream_entries else None
-            dreaming = dreaming_entry.content if dreaming_entry else ""
-            mood = self.agent.mood
-        else:
-            mood = ""
-            dreaming_entry = None
-            dreaming = ""
 
         # Add response bubble
         self.add_message(response, is_user=False)
@@ -408,9 +442,7 @@ class MemorySystemGUI(QWidget):
         mem_text = format_context(working)
         if context:
             mem_text += "\n\nRetrieved:\n" + format_context(context)
-        self.memory_box.setPlainText(mem_text)
-        self.mood_box.setPlainText(mood)
-        self.dream_box.setPlainText(dreaming)
+        self.add_memory_message(mem_text)
 
 
 def run_gui(agent=None, scheduler=None):
