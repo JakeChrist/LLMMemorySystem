@@ -16,6 +16,7 @@ from gui.qt_interface import MemorySystemGUI, MemoryBrowser
 import gui.qt_interface as gui_mod
 from core.memory_entry import MemoryEntry
 from core.memory_manager import MemoryManager
+from thinking.thinking_engine import ThinkingEngine
 import main
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -133,6 +134,33 @@ def test_update_countdown_refreshes_think_box():
     assert "thought2" in gui.think_box.toPlainText()
     label = gui.countdown_label.text()
     assert "T:7s" in label
+
+    app.quit()
+
+
+def test_think_once_updates_gui(tmp_path):
+    pytest.importorskip("PyQt5")
+    app = QApplication.instance() or QApplication([])
+
+    manager = MemoryManager(db_path=tmp_path / "mem.db")
+    agent = MagicMock()
+    agent.memory = manager
+
+    gui = MemorySystemGUI(agent)
+
+    engine = ThinkingEngine(prompts=["reflect"])
+    with patch("thinking.thinking_engine.llm_router.get_llm") as mock_get, \
+            patch("retrieval.cue_builder.build_cue", return_value="cue"), \
+            patch("retrieval.retriever.Retriever.query", return_value=[]), \
+            patch("reconstruction.reconstructor.Reconstructor.build_context", return_value=""):
+        mock_llm = MagicMock()
+        mock_llm.generate.return_value = "new thought"
+        mock_get.return_value = mock_llm
+        engine.think_once(manager, "neutral")
+
+    gui.update_countdown()
+
+    assert "new thought" in gui.think_box.toPlainText()
 
     app.quit()
 
