@@ -2,4 +2,4 @@
 memory:
   working_size: 10
 reconstruction:
-  max_context_length: 100
+  max_context_length: 1000
