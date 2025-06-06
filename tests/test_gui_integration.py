@@ -244,6 +244,7 @@ def test_settings_dialog_updates_lmstudio_timeout(monkeypatch):
 
     monkeypatch.setattr(gui_mod, "SchedulerSettingsDialog", FakeDialog)
 
+    monkeypatch.setenv("LMSTUDIO_TIMEOUT", "15")
     gui.show_settings()
 
     assert scheduler.T_think == 1.0
@@ -251,5 +252,6 @@ def test_settings_dialog_updates_lmstudio_timeout(monkeypatch):
     assert scheduler.T_alarm == 3.0
     assert agent.llm.timeout == 42.0
     assert scheduler.notify_input.called
+    assert os.getenv("LMSTUDIO_TIMEOUT") == "42.0"
 
     app.quit()

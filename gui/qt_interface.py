@@ -1,3 +1,4 @@
+import os
 from PyQt5.QtWidgets import (
     QApplication,
     QWidget,
@@ -339,6 +340,10 @@ class MemorySystemGUI(QWidget):
             self.scheduler.notify_input()
             if self.agent and isinstance(self.agent.llm, LMStudioBackend):
                 self.agent.llm.timeout = timeout
+                if timeout is None:
+                    os.environ["LMSTUDIO_TIMEOUT"] = "none"
+                else:
+                    os.environ["LMSTUDIO_TIMEOUT"] = str(timeout)
 
     def show_memories(self):
         if not self.agent:
