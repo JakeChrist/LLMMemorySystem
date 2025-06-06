@@ -154,6 +154,8 @@ class SchedulerSettingsDialog(QDialog):
         )
 
 class ChatBubble(QLabel):
+    """Simple word-wrapped label styled as a chat message bubble."""
+
     def __init__(self, text, is_user=True):
         super().__init__(text)
         self.setWordWrap(True)
@@ -165,6 +167,8 @@ class ChatBubble(QLabel):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
 
 class MemorySystemGUI(QWidget):
+    """Qt interface for interacting with an :class:`Agent` and its memories."""
+
     def __init__(self, agent, scheduler=None):
         super().__init__()
         self.agent = agent
