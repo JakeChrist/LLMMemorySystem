@@ -70,12 +70,9 @@ class ThinkingEngine:
         full_prompt = f"{context}\n{prompt}" if context else prompt
         llm = llm_router.get_llm(llm_name)
         thought = llm.generate(full_prompt).strip()
-        entry = manager.add(thought, metadata={"prompt": prompt})
-        tags = entry.metadata.get("tags", [])
-        if "introspection" not in tags:
-            tags.append("introspection")
-        entry.metadata["tags"] = tags
-        manager.db.update(entry.timestamp, entry)
+        entry = manager.add(
+            thought, metadata={"prompt": prompt, "tags": ["introspection"]}
+        )
         return thought
 
     def run(

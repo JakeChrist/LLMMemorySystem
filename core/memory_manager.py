@@ -54,7 +54,11 @@ class MemoryManager:
 
         tags = tag_text(content)
         meta = dict(metadata or {})
-        meta["tags"] = tags
+        meta_tags = list(meta.get("tags", []))
+        for tag in tags:
+            if tag not in meta_tags:
+                meta_tags.append(tag)
+        meta["tags"] = meta_tags
 
         entry = self.episodic.add(
             content,

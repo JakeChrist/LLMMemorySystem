@@ -13,7 +13,8 @@ from dreaming.dream_engine import DreamEngine
 def test_think_once_stores_introspection():
     manager = MemoryManager(db_path=":memory:")
     engine = ThinkingEngine(prompts=["reflect"])
-    with patch("thinking.thinking_engine.llm_router.get_llm") as mock_get:
+    with patch("thinking.thinking_engine.llm_router.get_llm") as mock_get, \
+            patch.object(manager.db, "update") as mock_update:
         mock_llm = MagicMock()
         mock_llm.generate.return_value = "thought"
         mock_get.return_value = mock_llm
@@ -23,6 +24,7 @@ def test_think_once_stores_introspection():
     assert entry.content == "thought"
     assert "introspection" in entry.metadata.get("tags", [])
     assert entry.metadata.get("prompt") == "reflect"
+    mock_update.assert_not_called()
 
 
 def test_run_invokes_think_once(tmp_path):
