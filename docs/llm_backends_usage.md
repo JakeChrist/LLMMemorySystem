@@ -78,16 +78,21 @@ Use `gui` or `cli` in place of `repl` to start the graphical interface or comman
    pip install requests
    ```
 2. Start the LMStudio server locally and note its URL.
-3. Optionally set environment variables to override defaults:
+3. Optionally set environment variables to override defaults. The timeout can
+   be disabled entirely by setting ``LMSTUDIO_TIMEOUT`` to ``none``:
    ```bash
    export LMSTUDIO_URL=http://localhost:1234/v1/chat/completions
    export LMSTUDIO_MODEL=my-model-name
-   export LMSTUDIO_TIMEOUT=120
+   export LMSTUDIO_TIMEOUT=120  # use "none" to disable the timeout
    ```
 4. Launch LLMemory:
    ```bash
    python main.py repl --llm lmstudio
    ```
+
+You can also instantiate :class:`LMStudioBackend` directly in Python. Passing
+``timeout=None`` (or setting the ``LMSTUDIO_TIMEOUT`` variable to ``none``) will
+disable the request timeout entirely.
 
 The same `--llm` option works with the GUI or memory CLI modes. For example:
 

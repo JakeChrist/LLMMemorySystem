@@ -97,3 +97,15 @@ def test_lmstudio_timeout_argument(monkeypatch):
     monkeypatch.setenv("LMSTUDIO_TIMEOUT", "33")
     backend = LMStudioBackend(timeout=44)
     assert backend.timeout == 44
+
+
+def test_lmstudio_timeout_none_argument(monkeypatch):
+    monkeypatch.setenv("LMSTUDIO_TIMEOUT", "22")
+    backend = LMStudioBackend(timeout=None)
+    assert backend.timeout is None
+
+
+def test_lmstudio_timeout_env_none(monkeypatch):
+    monkeypatch.setenv("LMSTUDIO_TIMEOUT", "none")
+    backend = LMStudioBackend()
+    assert backend.timeout is None

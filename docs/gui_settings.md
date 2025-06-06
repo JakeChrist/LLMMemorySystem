@@ -10,8 +10,10 @@ fields correspond to:
 - `T_dream` – idle time before the DreamEngine is triggered.
 - `T_alarm` – maximum duration of dreaming before waking automatically.
 - `LMStudio timeout` – request timeout in seconds when using the LMStudio
-  backend. This option only appears when the active LLM is LMStudio.
+  backend. Set the value to `0` to wait indefinitely. This option only appears
+  when the active LLM is LMStudio.
 
 Changes are applied immediately to the attached scheduler and any running
 background tasks are restarted. When using the LMStudio backend, the timeout
-for API requests can also be tuned here.
+for API requests can also be tuned here. Setting the value to ``0`` has the same
+effect as exporting ``LMSTUDIO_TIMEOUT=none``.
