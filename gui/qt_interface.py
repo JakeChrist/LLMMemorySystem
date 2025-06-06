@@ -18,6 +18,8 @@ from PyQt5.QtWidgets import (
     QMenuBar,
     QAction,
     QTabWidget,
+    QTableWidget,
+    QTableWidgetItem,
 )
 from PyQt5.QtCore import Qt, QTimer
 import sys
@@ -171,6 +173,7 @@ class MemorySystemGUI(QWidget):
             self.scheduler.agent = self.agent
         self._last_dream = None
         self._last_think = None
+        self._mem_count = 0
         self.init_ui()
 
     def init_ui(self):
@@ -252,18 +255,26 @@ class MemorySystemGUI(QWidget):
         memory_tab.setLayout(m_layout)
         self.tabs.addTab(memory_tab, "Memories")
 
+        # Browse tab - table of stored memories
+        self.table = QTableWidget()
+        self.table.setColumnCount(5)
+        self.table.setHorizontalHeaderLabels(
+            ["Timestamp", "Type", "Emotion", "Strength", "Memory"]
+        )
+        self.table.setEditTriggers(QTableWidget.NoEditTriggers)
+        browse_tab = QWidget()
+        b_layout = QVBoxLayout()
+        b_layout.addWidget(self.table)
+        browse_tab.setLayout(b_layout)
+        self.tabs.addTab(browse_tab, "Browse")
+
         # Right Panel: controls
         right_panel = QVBoxLayout()
         right_panel.addWidget(QLabel("Next Dream"))
         self.countdown_label = QLabel("")
         right_panel.addWidget(self.countdown_label)
 
-        btn_row = QHBoxLayout()
-        self.mem_button = QPushButton("Browse Memories")
-        self.mem_button.clicked.connect(self.show_memories)
-        btn_row.addWidget(self.mem_button)
-
-        right_panel.addLayout(btn_row)
+        right_panel.addStretch()
 
         # Assemble into layout
         right_widget = QWidget()
@@ -285,6 +296,8 @@ class MemorySystemGUI(QWidget):
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_countdown)
         self.timer.start(1000)
+
+        self.refresh_memory_table()
 
     def _scroll_to_bottom(self, scroll: QScrollArea) -> None:
         bar = scroll.verticalScrollBar()
@@ -342,6 +355,30 @@ class MemorySystemGUI(QWidget):
         )
         QTimer.singleShot(0, lambda: self._scroll_to_bottom(self.memory_scroll))
 
+    def _memory_type(self, mem: MemoryEntry) -> str:
+        if "introspection" in mem.metadata.get("tags", []):
+            return "thought"
+        if mem.content.startswith("Dream:"):
+            return "dream"
+        if mem.metadata.get("role") == "assistant":
+            return "response"
+        return "user"
+
+    def refresh_memory_table(self) -> None:
+        if not self.agent:
+            self.table.setRowCount(0)
+            return
+        entries = self.agent.memory.all()
+        self.table.setRowCount(len(entries))
+        for row, mem in enumerate(entries):
+            self.table.setItem(row, 0, QTableWidgetItem(mem.timestamp.isoformat()))
+            self.table.setItem(row, 1, QTableWidgetItem(self._memory_type(mem)))
+            emotion = mem.emotions[0] if mem.emotions else ""
+            strength = mem.emotion_scores.get(emotion, 0.0) if emotion else 0.0
+            self.table.setItem(row, 2, QTableWidgetItem(emotion))
+            self.table.setItem(row, 3, QTableWidgetItem(f"{strength:.2f}"))
+            self.table.setItem(row, 4, QTableWidgetItem(mem.content))
+
     def update_countdown(self) -> None:
         if not self.agent:
             self.countdown_label.setText("")
@@ -378,6 +415,11 @@ class MemorySystemGUI(QWidget):
             if latest_think is not self._last_think:
                 self.add_thought_message(latest_think.content)
                 self._last_think = latest_think
+
+        entries = self.agent.memory.all()
+        if len(entries) != self._mem_count:
+            self._mem_count = len(entries)
+            self.refresh_memory_table()
 
     def show_settings(self):
         if not self.scheduler:
@@ -443,6 +485,8 @@ class MemorySystemGUI(QWidget):
         if context:
             mem_text += "\n\nRetrieved:\n" + format_context(context)
         self.add_memory_message(mem_text)
+        self._mem_count = len(self.agent.memory.all()) if self.agent else 0
+        self.refresh_memory_table()
 
 
 def run_gui(agent=None, scheduler=None):

@@ -267,13 +267,8 @@ def test_input_box_visible_only_on_dialogue_tab():
     gui.tabs.setCurrentIndex(0)
     assert gui.input_box.isVisible()
 
-    gui.tabs.setCurrentIndex(1)
-    assert not gui.input_box.isVisible()
-
-    gui.tabs.setCurrentIndex(2)
-    assert not gui.input_box.isVisible()
-
-    gui.tabs.setCurrentIndex(3)
-    assert not gui.input_box.isVisible()
+    for idx in range(1, gui.tabs.count()):
+        gui.tabs.setCurrentIndex(idx)
+        assert not gui.input_box.isVisible()
 
     app.quit()
