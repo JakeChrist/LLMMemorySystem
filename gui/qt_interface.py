@@ -20,6 +20,7 @@ from PyQt5.QtWidgets import (
     QTabWidget,
     QTableWidget,
     QTableWidgetItem,
+    QFileDialog,
 )
 from PyQt5.QtCore import Qt, QTimer
 import sys
@@ -28,6 +29,7 @@ from ms_utils import format_context
 from encoding.tagging import tag_text
 from core.memory_entry import MemoryEntry
 from llm.lmstudio_api import LMStudioBackend
+from addons import memory_constructor
 
 
 class MemoryBrowser(QDialog):
@@ -273,6 +275,39 @@ class MemorySystemGUI(QWidget):
         browse_tab.setLayout(b_layout)
         self.tabs.addTab(browse_tab, "Browse")
 
+        # Import tab
+        import_tab = QWidget()
+        i_layout = QVBoxLayout()
+        choose_layout = QHBoxLayout()
+        self.transcript_btn = QPushButton("Choose Transcript")
+        self.bio_btn = QPushButton("Choose Biography")
+        choose_layout.addWidget(self.transcript_btn)
+        choose_layout.addWidget(self.bio_btn)
+        i_layout.addLayout(choose_layout)
+
+        self.preview = QTextEdit()
+        self.preview.setReadOnly(True)
+        i_layout.addWidget(self.preview)
+
+        action_layout = QHBoxLayout()
+        self.import_btn = QPushButton("Import")
+        self.cancel_import_btn = QPushButton("Cancel")
+        action_layout.addWidget(self.import_btn)
+        action_layout.addWidget(self.cancel_import_btn)
+        i_layout.addLayout(action_layout)
+
+        import_tab.setLayout(i_layout)
+        self.tabs.addTab(import_tab, "Import")
+
+        # Import handlers
+        self.transcript_btn.clicked.connect(self.choose_transcript)
+        self.bio_btn.clicked.connect(self.choose_biography)
+        self.import_btn.clicked.connect(self.import_data)
+        self.cancel_import_btn.clicked.connect(self.clear_import)
+
+        self._import_text = ""
+        self._import_type = None
+
         # Right Panel: controls
         right_panel = QVBoxLayout()
         right_panel.addWidget(QLabel("Next Dream"))
@@ -459,6 +494,46 @@ class MemorySystemGUI(QWidget):
             dlg.display_memory(row)
         dlg.exec()
         self.refresh_memory_table()
+
+    def choose_transcript(self) -> None:
+        """Prompt user to select a transcript file and show a preview."""
+        path, _ = QFileDialog.getOpenFileName(self, "Select Transcript")
+        if path:
+            with open(path, "r", encoding="utf-8") as fh:
+                self._import_text = fh.read()
+            self._import_type = "transcript"
+            lines = [ln.strip() for ln in self._import_text.splitlines() if ln.strip()]
+            self.preview.setPlainText("\n".join(lines))
+
+    def choose_biography(self) -> None:
+        """Prompt user to select a biography file and show a preview."""
+        path, _ = QFileDialog.getOpenFileName(self, "Select Biography")
+        if path:
+            with open(path, "r", encoding="utf-8") as fh:
+                self._import_text = fh.read()
+            self._import_type = "biography"
+            import re
+
+            parts = re.split(r"[.!?]+\s*", self._import_text)
+            lines = [p.strip() for p in parts if p.strip()]
+            self.preview.setPlainText("\n".join(lines))
+
+    def import_data(self) -> None:
+        """Import previewed data into memory and clear the preview."""
+        if not self.agent or not self._import_text:
+            return
+        if self._import_type == "transcript":
+            memory_constructor.ingest_transcript(self._import_text, self.agent.memory)
+        elif self._import_type == "biography":
+            memory_constructor.ingest_biography(self._import_text, self.agent.memory)
+        self.refresh_memory_table()
+        self.clear_import()
+
+    def clear_import(self) -> None:
+        """Reset import state and clear preview text."""
+        self._import_text = ""
+        self._import_type = None
+        self.preview.clear()
 
     def handle_submit(self):
         user_input = self.input_box.toPlainText().strip()
