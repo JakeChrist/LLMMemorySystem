@@ -377,7 +377,7 @@ def test_import_biography_calls_constructor(tmp_path, monkeypatch):
     def fake_ingest(text, manager):
         called["text"] = text
         called["manager"] = manager
-        return [], []
+        return [], [], []
 
     monkeypatch.setattr(memory_constructor, "ingest_biography", fake_ingest)
 

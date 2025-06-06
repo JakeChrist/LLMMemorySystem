@@ -16,6 +16,12 @@ _PROCEDURE_PAT = re.compile(
     re.IGNORECASE,
 )
 
+# Match sentences describing personal events or dates
+_EVENT_PAT = re.compile(
+    r"\b(\d{4}|at age \d+|\d+ years? old|born|graduat|married|divorc|died|moved|met|visited|travel|hired|fired)\b",
+    re.IGNORECASE,
+)
+
 
 def ingest_transcript(
     text: str, manager: MemoryManager, *, summarize: bool = False
@@ -73,11 +79,12 @@ def ingest_transcript(
 
 def ingest_biography(
     text: str, manager: MemoryManager
-) -> Tuple[List[MemoryEntry], List[MemoryEntry]]:
-    """Parse biography text into semantic and procedural memories.
+) -> Tuple[List[MemoryEntry], List[MemoryEntry], List[MemoryEntry]]:
+    """Parse biography text into semantic, episodic and procedural memories.
 
     Sentences describing skills or procedures are stored in procedural memory,
-    all others are stored in semantic memory.
+    sentences containing event-related cues are stored in episodic memory,
+    and all remaining sentences become semantic memories.
 
     Parameters
     ----------
@@ -88,11 +95,12 @@ def ingest_biography(
 
     Returns
     -------
-    tuple[list[MemoryEntry], list[MemoryEntry]]
-        ``(semantic_entries, procedural_entries)`` created from the biography.
+    tuple[list[MemoryEntry], list[MemoryEntry], list[MemoryEntry]]
+        ``(semantic_entries, episodic_entries, procedural_entries)`` created from the biography.
     """
 
     semantic_entries: List[MemoryEntry] = []
+    episodic_entries: List[MemoryEntry] = []
     procedural_entries: List[MemoryEntry] = []
     sentences = re.split(r"[.!?]+\s*", text)
     for sent in sentences:
@@ -111,6 +119,14 @@ def ingest_biography(
                 metadata=metadata,
             )
             procedural_entries.append(entry)
+        elif _EVENT_PAT.search(sentence):
+            entry = manager.add(
+                sentence,
+                emotions=labels,
+                emotion_scores=scores,
+                metadata=metadata,
+            )
+            episodic_entries.append(entry)
         else:
             entry = manager.add_semantic(
                 sentence,
@@ -120,4 +136,4 @@ def ingest_biography(
             )
             semantic_entries.append(entry)
 
-    return semantic_entries, procedural_entries
+    return semantic_entries, episodic_entries, procedural_entries

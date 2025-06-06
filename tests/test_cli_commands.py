@@ -246,13 +246,15 @@ def test_import_biography(tmp_path, capsys, monkeypatch):
     agent = str(tmp_path / "agent_bio")
     memory_cli.import_biography(str(bio_file), agent)
     out = capsys.readouterr().out
-    assert "semantic" in out and "procedural" in out
+    assert "episodic" in out and "semantic" in out and "procedural" in out
     db = Database(f"{agent}.db")
+    epis = db.load_all()
     sem = db.load_all_semantic()
     proc = db.load_all_procedural()
-    assert len(sem) == 2
+    assert len(epis) == 1
+    assert len(sem) == 1
     assert len(proc) == 1
-    for e in sem + proc:
+    for e in epis + sem + proc:
         assert e.metadata["source"] == "biography"
 
 
@@ -286,13 +288,13 @@ def test_import_biography_calls_constructor(tmp_path, monkeypatch, capsys):
     def fake_bio(text, manager):
         called["text"] = text
         called["path"] = str(manager.db.path)
-        return [object()], [object()]
+        return [object()], [object()], [object()]
 
     monkeypatch.setattr(memory_cli.memory_constructor, "ingest_biography", fake_bio)
 
     agent = str(tmp_path / "bio_agent")
     memory_cli.import_biography(str(bio_file), agent)
     out = capsys.readouterr().out
-    assert "1 semantic" in out and "1 procedural" in out
+    assert "episodic" in out and "semantic" in out and "procedural" in out
     assert called["text"] == bio_file.read_text()
     assert called["path"].endswith("bio_agent.db")
