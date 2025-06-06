@@ -98,6 +98,8 @@ python -m cli.memory_cli add "remember this" --model all-MiniLM-L6-v2
 python -m cli.memory_cli query "cats" --top-k 3 --model all-MiniLM-L6-v2
 python -m cli.memory_cli dream
 python -m cli.memory_cli reset
+python -m cli.memory_cli add-conversation chat.txt --agent bob
+python -m cli.memory_cli add-biography bio.txt --agent bob
 ```
 
 Use `--model` to select a sentence-transformers embedding model and `--top-k`

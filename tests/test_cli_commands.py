@@ -208,3 +208,49 @@ def test_reset_database_clears_all_categories(tmp_path):
     assert db.load_all() == []
     assert db.load_all_semantic() == []
     assert db.load_all_procedural() == []
+
+
+def test_import_conversation(tmp_path, capsys, monkeypatch):
+    conv_file = tmp_path / "conv.txt"
+    conv_file.write_text("Alice: Hello\nBob: Hi")
+
+    monkeypatch.setattr(
+        memory_cli.memory_constructor,
+        "analyze_emotions",
+        lambda text: [("neutral", 1.0)],
+    )
+
+    agent = str(tmp_path / "agent")
+    memory_cli.import_conversation(str(conv_file), agent)
+    out = capsys.readouterr().out
+    assert "2 episodic" in out
+    db = Database(f"{agent}.db")
+    entries = db.load_all()
+    assert len(entries) == 2
+    assert entries[0].metadata["source"] == "transcript"
+    assert entries[0].metadata["speaker"] == "Alice"
+
+
+def test_import_biography(tmp_path, capsys, monkeypatch):
+    bio_file = tmp_path / "bio.txt"
+    bio_file.write_text(
+        "John was born in 1990. He learned to swim. He works as a baker."
+    )
+
+    monkeypatch.setattr(
+        memory_cli.memory_constructor,
+        "analyze_emotions",
+        lambda text: [("neutral", 1.0)],
+    )
+
+    agent = str(tmp_path / "agent_bio")
+    memory_cli.import_biography(str(bio_file), agent)
+    out = capsys.readouterr().out
+    assert "semantic" in out and "procedural" in out
+    db = Database(f"{agent}.db")
+    sem = db.load_all_semantic()
+    proc = db.load_all_procedural()
+    assert len(sem) == 2
+    assert len(proc) == 1
+    for e in sem + proc:
+        assert e.metadata["source"] == "biography"
