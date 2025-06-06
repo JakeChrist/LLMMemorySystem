@@ -254,3 +254,45 @@ def test_import_biography(tmp_path, capsys, monkeypatch):
     assert len(proc) == 1
     for e in sem + proc:
         assert e.metadata["source"] == "biography"
+
+
+def test_import_conversation_calls_constructor(tmp_path, monkeypatch, capsys):
+    conv_file = tmp_path / "conv_cli.txt"
+    conv_file.write_text("Alice: Hi")
+
+    called = {}
+
+    def fake_ingest(text, manager):
+        called["text"] = text
+        called["path"] = str(manager.db.path)
+        return [object()]
+
+    monkeypatch.setattr(memory_cli.memory_constructor, "ingest_transcript", fake_ingest)
+
+    agent = str(tmp_path / "cli_agent")
+    memory_cli.import_conversation(str(conv_file), agent)
+    out = capsys.readouterr().out
+    assert "1 episodic" in out
+    assert called["text"] == conv_file.read_text()
+    assert called["path"].endswith("cli_agent.db")
+
+
+def test_import_biography_calls_constructor(tmp_path, monkeypatch, capsys):
+    bio_file = tmp_path / "bio_cli.txt"
+    bio_file.write_text("Born 1990. Learned to swim.")
+
+    called = {}
+
+    def fake_bio(text, manager):
+        called["text"] = text
+        called["path"] = str(manager.db.path)
+        return [object()], [object()]
+
+    monkeypatch.setattr(memory_cli.memory_constructor, "ingest_biography", fake_bio)
+
+    agent = str(tmp_path / "bio_agent")
+    memory_cli.import_biography(str(bio_file), agent)
+    out = capsys.readouterr().out
+    assert "1 semantic" in out and "1 procedural" in out
+    assert called["text"] == bio_file.read_text()
+    assert called["path"].endswith("bio_agent.db")
