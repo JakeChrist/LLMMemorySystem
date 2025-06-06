@@ -267,13 +267,42 @@ def test_input_box_visible_only_on_dialogue_tab():
     gui.tabs.setCurrentIndex(0)
     assert gui.input_box.isVisible()
 
-    gui.tabs.setCurrentIndex(1)
-    assert not gui.input_box.isVisible()
+    for idx in range(1, gui.tabs.count()):
+        gui.tabs.setCurrentIndex(idx)
+        assert not gui.input_box.isVisible()
 
-    gui.tabs.setCurrentIndex(2)
-    assert not gui.input_box.isVisible()
+    app.quit()
 
-    gui.tabs.setCurrentIndex(3)
-    assert not gui.input_box.isVisible()
+
+def test_memory_table_double_click_opens_browser(tmp_path, monkeypatch):
+    app = QApplication.instance() or QApplication([])
+
+    manager = MemoryManager(db_path=tmp_path / "mem.db")
+    manager.add("hi there")
+
+    agent = MagicMock()
+    agent.memory = manager
+
+    gui = MemorySystemGUI(agent)
+    gui.refresh_memory_table()
+
+    created = {}
+
+    class FakeBrowser:
+        def __init__(self, mgr):
+            created["manager"] = mgr
+            self.list = MagicMock()
+
+        def exec(self):
+            created["row"] = self.list.setCurrentRow.call_args[0][0]
+            created["executed"] = True
+
+    monkeypatch.setattr(gui_mod, "MemoryBrowser", FakeBrowser)
+
+    gui.open_memory_dialog(0, 0)
+
+    assert created.get("executed")
+    assert created.get("row") == 0
+    assert created.get("manager") is manager
 
     app.quit()
