@@ -266,6 +266,7 @@ class MemorySystemGUI(QWidget):
             ["Timestamp", "Type", "Emotion", "Strength", "Memory"]
         )
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.table.cellDoubleClicked.connect(self.open_memory_dialog)
         browse_tab = QWidget()
         b_layout = QVBoxLayout()
         b_layout.addWidget(self.table)
@@ -447,6 +448,17 @@ class MemorySystemGUI(QWidget):
             return
         dlg = MemoryBrowser(self.agent.memory)
         dlg.exec()
+
+    def open_memory_dialog(self, row: int | None = None, column: int | None = None) -> None:
+        """Open a :class:`MemoryBrowser` and refresh the table when closed."""
+        if not self.agent:
+            return
+        dlg = MemoryBrowser(self.agent.memory)
+        if row is not None:
+            dlg.list.setCurrentRow(row)
+            dlg.display_memory(row)
+        dlg.exec()
+        self.refresh_memory_table()
 
     def handle_submit(self):
         user_input = self.input_box.toPlainText().strip()

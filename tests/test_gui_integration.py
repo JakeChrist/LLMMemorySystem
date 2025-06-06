@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import pytest
 
 PyQt5 = pytest.importorskip("PyQt5")
-from PyQt5.QtWidgets import QApplication, QLabel, QDialog, QMenuBar
+from PyQt5.QtWidgets import QApplication, QLabel, QDialog, QMenuBar, QListWidget
 from llm.lmstudio_api import LMStudioBackend
 
 from gui.qt_interface import MemorySystemGUI, MemoryBrowser
@@ -270,5 +270,36 @@ def test_input_box_visible_only_on_dialogue_tab():
     for idx in range(1, gui.tabs.count()):
         gui.tabs.setCurrentIndex(idx)
         assert not gui.input_box.isVisible()
+
+    app.quit()
+
+
+def test_memory_table_double_click_opens_browser(tmp_path, monkeypatch):
+    app = QApplication.instance() or QApplication([])
+
+    manager = MemoryManager(db_path=tmp_path / "mem.db")
+    manager.add("hello")
+
+    agent = MagicMock()
+    agent.memory = manager
+
+    gui = MemorySystemGUI(agent)
+
+    class FakeBrowser:
+        def __init__(self, mgr):
+            self.manager = mgr
+            self.list = QListWidget()
+
+        def display_memory(self, row):
+            pass
+
+        def exec(self):
+            self.manager.update(self.manager.all()[0], "hello world")
+
+    monkeypatch.setattr(gui_mod, "MemoryBrowser", FakeBrowser)
+
+    gui.table.cellDoubleClicked.emit(0, 0)
+
+    assert gui.table.item(0, 4).text() == "hello world"
 
     app.quit()
