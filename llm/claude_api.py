@@ -24,12 +24,20 @@ class ClaudeBackend(BaseLLM):
         else:  # pragma: no cover - degrade gracefully
             self.client = None
 
-    def generate(self, prompt: str) -> str:
+    def generate(self, prompt: str | list[dict[str, str]]) -> str:
+        """Return a completion for ``prompt`` using Anthropic's API."""
+
         if self.client is None:
             return "Claude backend unavailable."
+
+        if isinstance(prompt, list):
+            messages = prompt
+        else:
+            messages = [{"role": "user", "content": prompt}]
+
         resp: Any = self.client.messages.create(
             model=self.model,
-            messages=[{"role": "user", "content": prompt}],
+            messages=messages,
             max_tokens=512,
         )
         # anthropic 0.24 returns resp.content[0].text

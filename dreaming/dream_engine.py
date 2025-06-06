@@ -53,7 +53,17 @@ class DreamEngine:
             + format_context(lines)
         )
         llm = llm_router.get_llm(llm_name)
-        summary = llm.generate(prompt).strip()
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are the agent's subconscious summarizing experiences."
+                    " Respond in the first person as a brief dream narrative."
+                ),
+            },
+            {"role": "user", "content": prompt},
+        ]
+        summary = llm.generate(messages).strip()
         summary = "Dream: " + summary
         emotions = analyze_emotions(summary)
         labels = [e[0] for e in emotions]

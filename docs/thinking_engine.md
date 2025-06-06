@@ -43,7 +43,10 @@ The ThinkingEngine complements the DreamEngine as a passive background process:
 - **Cue Construction:** Generate retrieval cues from internal state, recent thoughts or emotions.
 - **Memory Retrieval:** Retrieve relevant memories using cue-based similarity and tagging.
 - **Context Reconstruction:** Build a coherent context as the basis for introspective prompting.
-- **LLM Generation:** Send reflective prompts and context to the LLM backend. The response represents the agent's internal thought.
+- **LLM Generation:** Send reflective prompts and context to the LLM backend. The
+  prompts are issued as a system message so the model replies in the first
+  person instead of addressing the agent as "you". The response represents the
+  agent's internal thought.
 - **Memory Update:** Store each introspection as an episodic memory tagged `introspection`. Optionally infer semantic or procedural updates.
 - **Triggering:** Support time-based, idle-based and event-based activation.
 

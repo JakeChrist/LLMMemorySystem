@@ -6,5 +6,5 @@ from llm.base_interface import BaseLLM
 
 
 class LocalLLM(BaseLLM):
-    def generate(self, prompt: str) -> str:
+    def generate(self, prompt: str | list[dict[str, str]]) -> str:
         return "Local backend unavailable."
