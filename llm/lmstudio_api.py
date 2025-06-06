@@ -5,6 +5,8 @@ from __future__ import annotations
 import os
 from typing import Any
 
+_DEFAULT = object()
+
 from llm.base_interface import BaseLLM
 
 try:  # pragma: no cover - optional dependency
@@ -20,7 +22,7 @@ class LMStudioBackend(BaseLLM):
         self,
         url: str | None = None,
         model: str | None = None,
-        timeout: int | float | None = None,
+        timeout: int | float | None | object = _DEFAULT,
     ) -> None:
         """Create a new LMStudio backend instance.
 
@@ -31,18 +33,29 @@ class LMStudioBackend(BaseLLM):
         model:
             Model name to use for requests.
         timeout:
-            Request timeout in seconds. Defaults to the ``LMSTUDIO_TIMEOUT``
-            environment variable or ``30`` seconds.
+            Request timeout in seconds. Pass ``None`` to disable. Defaults to
+            the ``LMSTUDIO_TIMEOUT`` environment variable or ``30`` seconds.
         """
 
         self.url = url or os.getenv("LMSTUDIO_URL", "http://localhost:1234/v1/chat/completions")
         self.model = model or os.getenv("LMSTUDIO_MODEL", "local")
         env_timeout = os.getenv("LMSTUDIO_TIMEOUT")
-        self.timeout = (
-            timeout
-            if timeout is not None
-            else float(env_timeout) if env_timeout is not None else 30.0
-        )
+        if env_timeout is not None:
+            env_timeout = env_timeout.strip().lower()
+            if env_timeout == "none":
+                env_timeout_val = None
+            else:
+                env_timeout_val = float(env_timeout)
+        else:
+            env_timeout_val = None
+
+        if timeout is _DEFAULT:
+            if env_timeout is not None:
+                self.timeout = env_timeout_val
+            else:
+                self.timeout = 30.0
+        else:
+            self.timeout = timeout
 
     def generate(self, prompt: str) -> str:
         """Generate a completion for ``prompt`` using the LMStudio server."""

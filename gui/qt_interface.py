@@ -118,8 +118,9 @@ class SchedulerSettingsDialog(QDialog):
         agent = getattr(scheduler, "agent", None)
         if agent and isinstance(getattr(agent, "llm", None), LMStudioBackend):
             self.lmstudio_timeout_spin = QDoubleSpinBox()
-            self.lmstudio_timeout_spin.setRange(1.0, 600.0)
-            self.lmstudio_timeout_spin.setValue(agent.llm.timeout)
+            self.lmstudio_timeout_spin.setRange(0.0, 600.0)
+            value = agent.llm.timeout if agent.llm.timeout is not None else 0.0
+            self.lmstudio_timeout_spin.setValue(value)
             form.addRow("LMStudio timeout (s)", self.lmstudio_timeout_spin)
 
         layout.addLayout(form)
@@ -134,11 +135,11 @@ class SchedulerSettingsDialog(QDialog):
         self.setLayout(layout)
 
     def values(self):
-        timeout = (
-            self.lmstudio_timeout_spin.value()
-            if self.lmstudio_timeout_spin is not None
-            else None
-        )
+        if self.lmstudio_timeout_spin is not None:
+            val = self.lmstudio_timeout_spin.value()
+            timeout = None if val == 0 else val
+        else:
+            timeout = None
         return (
             self.think_spin.value(),
             self.dream_spin.value(),
@@ -336,9 +337,8 @@ class MemorySystemGUI(QWidget):
             self.scheduler.T_dream = dream
             self.scheduler.T_alarm = alarm
             self.scheduler.notify_input()
-            if timeout is not None and self.agent:
-                if isinstance(self.agent.llm, LMStudioBackend):
-                    self.agent.llm.timeout = timeout
+            if self.agent and isinstance(self.agent.llm, LMStudioBackend):
+                self.agent.llm.timeout = timeout
 
     def show_memories(self):
         if not self.agent:
