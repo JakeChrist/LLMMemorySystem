@@ -9,7 +9,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import pytest
 
 PyQt5 = pytest.importorskip("PyQt5")
-from PyQt5.QtWidgets import QApplication, QLabel, QDialog, QMenuBar, QListWidget
+from PyQt5.QtWidgets import (
+    QApplication,
+    QLabel,
+    QDialog,
+    QMenuBar,
+    QListWidget,
+)
 from llm.lmstudio_api import LMStudioBackend
 
 from gui.qt_interface import MemorySystemGUI, MemoryBrowser
@@ -17,6 +23,7 @@ import gui.qt_interface as gui_mod
 from core.memory_entry import MemoryEntry
 from core.memory_manager import MemoryManager
 from thinking.thinking_engine import ThinkingEngine
+from addons import memory_constructor
 import main
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -301,5 +308,70 @@ def test_memory_table_double_click_opens_browser(tmp_path, monkeypatch):
     gui.table.cellDoubleClicked.emit(0, 0)
 
     assert gui.table.item(0, 4).text() == "hello world"
+
+    app.quit()
+
+
+def test_import_tab_present():
+    app = QApplication.instance() or QApplication([])
+
+    gui = MemorySystemGUI(None)
+
+    labels = [gui.tabs.tabText(i) for i in range(gui.tabs.count())]
+    assert "Import" in labels
+
+    app.quit()
+
+
+def test_import_calls_constructor(tmp_path, monkeypatch):
+    app = QApplication.instance() or QApplication([])
+
+    agent = MagicMock()
+    agent.memory = MemoryManager(db_path=tmp_path / "mem.db")
+
+    conv = tmp_path / "conv.txt"
+    conv.write_text("Alice: Hi")
+
+    monkeypatch.setattr(
+        gui_mod.QFileDialog,
+        "getOpenFileName",
+        lambda *a, **k: (str(conv), ""),
+    )
+
+    called = {}
+
+    def fake_ingest(text, manager):
+        called["text"] = text
+        called["manager"] = manager
+        return []
+
+    monkeypatch.setattr(memory_constructor, "ingest_transcript", fake_ingest)
+
+    gui = MemorySystemGUI(agent)
+    gui.transcript_btn.click()
+    gui.import_btn.click()
+
+    assert called["text"] == conv.read_text()
+    assert called["manager"] is agent.memory
+
+    app.quit()
+
+
+def test_import_preview_shows(tmp_path, monkeypatch):
+    app = QApplication.instance() or QApplication([])
+
+    bio = tmp_path / "bio.txt"
+    bio.write_text("Born 1990. Learned to swim.")
+
+    monkeypatch.setattr(
+        gui_mod.QFileDialog,
+        "getOpenFileName",
+        lambda *a, **k: (str(bio), ""),
+    )
+
+    gui = MemorySystemGUI(None)
+    gui.bio_btn.click()
+
+    assert "Born 1990" in gui.preview.toPlainText()
 
     app.quit()
