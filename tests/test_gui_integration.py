@@ -45,7 +45,7 @@ def test_gui_handle_submit_updates_panels():
     assert mock_agent.receive.called
     bubbles = gui.dialogue_scroll.widget().findChildren(QLabel)
     assert bubbles[-1].text() == "reply"
-    mem_bubbles = gui.memory_scroll.widget().findChildren(QLabel)
+    mem_bubbles = gui.memory_layout.parentWidget().findChildren(QLabel)
     assert "fact1" in mem_bubbles[-1].text()
 
     app.quit()
@@ -89,7 +89,7 @@ def test_update_countdown_refreshes_dream_box():
 
     gui.update_countdown()
 
-    dream_bubbles = gui.dream_scroll.widget().findChildren(QLabel)
+    dream_bubbles = gui.dream_layout.parentWidget().findChildren(QLabel)
     assert "Dream: second" in dream_bubbles[-1].text()
     label = gui.countdown_label.text()
     assert "D:10s" in label
@@ -130,7 +130,7 @@ def test_update_countdown_refreshes_think_box():
 
     gui.update_countdown()
 
-    thought_bubbles = gui.thought_scroll.widget().findChildren(QLabel)
+    thought_bubbles = gui.thought_layout.parentWidget().findChildren(QLabel)
     assert "thought2" in thought_bubbles[-1].text()
     label = gui.countdown_label.text()
     assert "T:7s" in label
@@ -160,7 +160,7 @@ def test_think_once_updates_gui(tmp_path):
 
     gui.update_countdown()
 
-    thought_bubbles = gui.thought_scroll.widget().findChildren(QLabel)
+    thought_bubbles = gui.thought_layout.parentWidget().findChildren(QLabel)
     assert "new thought" in thought_bubbles[-1].text()
 
     app.quit()
@@ -256,5 +256,24 @@ def test_settings_dialog_updates_lmstudio_timeout(monkeypatch):
     assert agent.llm.timeout == 42.0
     assert scheduler.notify_input.called
     assert os.getenv("LMSTUDIO_TIMEOUT") == "42.0"
+
+    app.quit()
+
+def test_input_box_visible_only_on_dialogue_tab():
+    app = QApplication.instance() or QApplication([])
+
+    gui = MemorySystemGUI(None)
+
+    gui.tabs.setCurrentIndex(0)
+    assert gui.input_box.isVisible()
+
+    gui.tabs.setCurrentIndex(1)
+    assert not gui.input_box.isVisible()
+
+    gui.tabs.setCurrentIndex(2)
+    assert not gui.input_box.isVisible()
+
+    gui.tabs.setCurrentIndex(3)
+    assert not gui.input_box.isVisible()
 
     app.quit()
