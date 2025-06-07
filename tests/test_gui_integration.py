@@ -284,6 +284,48 @@ def test_settings_dialog_updates_lmstudio_timeout(monkeypatch):
 
     app.quit()
 
+
+def test_settings_dialog_saves(monkeypatch, tmp_path):
+    app = QApplication.instance() or QApplication([])
+
+    scheduler = MagicMock()
+    scheduler.T_think = 5.0
+    scheduler.T_dream = 10.0
+    scheduler.T_alarm = 20.0
+    scheduler.notify_input = MagicMock()
+    scheduler.agent = MagicMock()
+    scheduler.agent.llm = LMStudioBackend(timeout=30)
+    scheduler.agent.memory = MemoryManager(db_path=tmp_path / "old.db")
+    scheduler.manager = scheduler.agent.memory
+    scheduler.llm_name = "lmstudio"
+
+    gui = MemorySystemGUI(scheduler.agent, scheduler=scheduler)
+
+    class FakeDialog:
+        def __init__(self, sched):
+            self.sched = sched
+
+        def exec(self):
+            return QDialog.Accepted
+
+        def values(self):
+            return 1.0, 2.0, 3.0, 40.0, "openai", str(tmp_path / "new.db")
+
+    saved = {}
+    monkeypatch.setattr(gui_mod, "SchedulerSettingsDialog", FakeDialog)
+    monkeypatch.setattr(gui_mod.settings_store, "save_settings", lambda data: saved.update(data))
+    monkeypatch.setattr(gui_mod.llm_router, "get_llm", lambda n: MagicMock())
+    monkeypatch.setattr(gui_mod, "MemoryManager", lambda path: scheduler.agent.memory)
+
+    gui.settings_action.trigger()
+
+    assert saved["T_think"] == 1.0
+    assert saved["llm_name"] == "openai"
+    assert saved["db_path"] == str(tmp_path / "new.db")
+    assert saved["lmstudio_timeout"] == 40.0
+
+    app.quit()
+
 def test_input_box_visible_only_on_dialogue_tab():
     app = QApplication.instance() or QApplication([])
 
@@ -485,3 +527,66 @@ def test_memory_browser_edits_and_deletes_non_episodic(tmp_path, monkeypatch):
     assert gui.table.rowCount() == 1
 
     app.quit()
+
+
+def test_run_gui_loads_settings(tmp_path, monkeypatch):
+    PyQt5 = pytest.importorskip("PyQt5")
+
+    class FakeApp:
+        def __init__(self, *a, **k):
+            pass
+
+        @staticmethod
+        def instance():
+            return None
+
+        def exec(self):
+            return 0
+
+    monkeypatch.setattr(gui_mod, "QApplication", FakeApp)
+    monkeypatch.setattr(sys, "exit", lambda *a, **k: None)
+
+    settings = {
+        "T_think": 1.0,
+        "T_dream": 2.0,
+        "T_alarm": 3.0,
+        "llm_name": "openai",
+        "db_path": str(tmp_path / "new.db"),
+        "lmstudio_timeout": 50.0,
+    }
+
+    monkeypatch.setattr(gui_mod.settings_store, "load_settings", lambda: settings)
+
+    agent = MagicMock()
+    agent.llm_name = "local"
+    agent.llm = LMStudioBackend(timeout=20)
+    agent.memory = MemoryManager(db_path=tmp_path / "mem.db")
+
+    scheduler = MagicMock()
+    scheduler.T_think = 5.0
+    scheduler.T_dream = 10.0
+    scheduler.T_alarm = 20.0
+    scheduler.llm_name = "local"
+    scheduler.manager = agent.memory
+
+    new_llm = MagicMock()
+    monkeypatch.setattr(gui_mod.llm_router, "get_llm", lambda name: new_llm)
+    monkeypatch.setattr(gui_mod, "MemoryManager", lambda path: MagicMock(db=MagicMock(path=Path(path))))
+
+    class FakeGUI:
+        def __init__(self, a, s):
+            self.agent = a
+            self.scheduler = s
+
+        def show(self):
+            pass
+
+    monkeypatch.setattr(gui_mod, "MemorySystemGUI", FakeGUI)
+
+    gui_mod.run_gui(agent, scheduler)
+
+    assert scheduler.T_think == 1.0
+    assert scheduler.llm_name == "openai"
+    assert str(scheduler.manager.db.path) == str(tmp_path / "new.db")
+    assert agent.llm is new_llm
+    assert agent.llm.timeout == 50.0

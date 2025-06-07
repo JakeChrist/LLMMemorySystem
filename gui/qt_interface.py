@@ -35,6 +35,7 @@ from llm import llm_router
 from core.memory_manager import MemoryManager
 from pathlib import Path
 from addons import memory_constructor
+from . import settings_store
 
 
 class MemoryBrowser(QDialog):
@@ -533,6 +534,20 @@ class MemorySystemGUI(QWidget):
                     else:
                         os.environ["LMSTUDIO_TIMEOUT"] = str(timeout)
 
+            data = {
+                "T_think": self.scheduler.T_think,
+                "T_dream": self.scheduler.T_dream,
+                "T_alarm": self.scheduler.T_alarm,
+                "llm_name": self.scheduler.llm_name,
+                "db_path": str(self.agent.memory.db.path) if self.agent else "",
+                "lmstudio_timeout": (
+                    self.agent.llm.timeout
+                    if self.agent and isinstance(self.agent.llm, LMStudioBackend)
+                    else None
+                ),
+            }
+            settings_store.save_settings(data)
+
     def show_memories(self):
         if not self.agent:
             return
@@ -654,6 +669,30 @@ def run_gui(agent=None, scheduler=None):
     app = QApplication.instance()
     if app is None:
         app = QApplication(sys.argv)
+
+    if agent and scheduler:
+        cfg = settings_store.load_settings()
+        scheduler.T_think = cfg.get("T_think", scheduler.T_think)
+        scheduler.T_dream = cfg.get("T_dream", scheduler.T_dream)
+        scheduler.T_alarm = cfg.get("T_alarm", scheduler.T_alarm)
+        scheduler.llm_name = cfg.get("llm_name", scheduler.llm_name)
+
+        if agent.llm_name != scheduler.llm_name:
+            agent.llm_name = scheduler.llm_name
+            agent.llm = llm_router.get_llm(agent.llm_name)
+
+        db_path = cfg.get("db_path")
+        if db_path and str(agent.memory.db.path) != db_path:
+            agent.memory = MemoryManager(db_path=db_path)
+            scheduler.manager = agent.memory
+
+        if isinstance(agent.llm, LMStudioBackend):
+            timeout = cfg.get("lmstudio_timeout")
+            if timeout is not None:
+                agent.llm.timeout = timeout
+                os.environ["LMSTUDIO_TIMEOUT"] = (
+                    "none" if timeout is None else str(timeout)
+                )
 
     gui = MemorySystemGUI(agent, scheduler)
     gui.show()
