@@ -1,7 +1,8 @@
 # GUI Scheduler Settings
 
 The Qt interface features a menu bar containing a **Settings** action that opens
-a dialog to tweak the idle thresholds used by the `CognitiveScheduler`.
+a dialog.  In addition to the scheduler thresholds it allows switching the
+active LLM backend and the database file.
 
 Use the *Settings* action in the window's menu bar to open the dialog. Older
 versions exposed a separate button on the side panel. The
@@ -10,6 +11,8 @@ fields correspond to:
 - `T_think` – seconds of inactivity before background thinking starts.
 - `T_dream` – idle time before the DreamEngine is triggered.
 - `T_alarm` – maximum duration of dreaming before waking automatically.
+- `LLM backend` – selects which language model implementation to use.
+- `Database file` – location of the SQLite memory store.
 - `LMStudio timeout` – request timeout in seconds when using the LMStudio
   backend. Set the value to `0` to wait indefinitely. This option only appears
   when the active LLM is LMStudio.
