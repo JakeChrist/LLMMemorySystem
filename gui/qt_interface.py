@@ -26,6 +26,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, QTimer
 import sys
+import re
 
 from ms_utils import format_context
 from encoding.tagging import tag_text
@@ -582,8 +583,6 @@ class MemorySystemGUI(QWidget):
             with open(path, "r", encoding="utf-8") as fh:
                 self._import_text = fh.read()
             self._import_type = "biography"
-            import re
-
             parts = re.split(r"[.!?]+\s*", self._import_text)
             lines = [p.strip() for p in parts if p.strip()]
             self.preview.setPlainText("\n".join(lines))
