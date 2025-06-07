@@ -56,10 +56,11 @@ class Agent:
         if resp_emotions:
             self.mood = resp_emotions[0][0]
 
+        resp_tags = tag_text(response)
         self.memory.add(
             response,
             emotions=[e[0] for e in resp_emotions],
             emotion_scores={lbl: score for lbl, score in resp_emotions},
-            metadata={"role": "assistant"},
+            metadata={"role": "assistant", "tags": resp_tags},
         )
         return response
