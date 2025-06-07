@@ -85,13 +85,15 @@ class CognitiveScheduler:
                 self.state = CognitiveState.ASLEEP
                 self.state_start = now
                 self._dream_sched = self.manager.start_dreaming(
-                    llm_name=self.llm_name
+                    interval=self.T_dream,
+                    llm_name=self.llm_name,
                 )
             elif idle >= self.T_think:
                 self.state = CognitiveState.REFLECTIVE
                 self.state_start = now
                 self._think_sched = self.manager.start_thinking(
-                    llm_name=self.llm_name
+                    interval=self.T_think,
+                    llm_name=self.llm_name,
                 )
         elif self.state == CognitiveState.REFLECTIVE:
             if idle >= self.T_dream:
@@ -101,7 +103,8 @@ class CognitiveScheduler:
                 self.state = CognitiveState.ASLEEP
                 self.state_start = now
                 self._dream_sched = self.manager.start_dreaming(
-                    llm_name=self.llm_name
+                    interval=self.T_dream,
+                    llm_name=self.llm_name,
                 )
         elif self.state == CognitiveState.ASLEEP:
             if now - self.state_start >= self.T_alarm:

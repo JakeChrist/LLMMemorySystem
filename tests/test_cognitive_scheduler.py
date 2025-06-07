@@ -26,11 +26,13 @@ def test_state_transitions(monkeypatch):
 
     sched.check()
     assert sched.current_state() is CognitiveState.REFLECTIVE
-    assert start_think.called
+    start_think.assert_called_once()
+    assert start_think.call_args.kwargs.get("interval") == 10
 
     sched.check()
     assert sched.current_state() is CognitiveState.ASLEEP
-    assert start_dream.called
+    start_dream.assert_called_once()
+    assert start_dream.call_args.kwargs.get("interval") == 20
     assert stop_think.called
 
     sched.notify_input()
@@ -81,10 +83,12 @@ def test_idle_period_transitions(monkeypatch):
     scheduler.check()
     assert scheduler.current_state() is CognitiveState.REFLECTIVE
     start_think.assert_called_once()
+    assert start_think.call_args.kwargs.get("interval") == 5
 
     scheduler.check()
     assert scheduler.current_state() is CognitiveState.ASLEEP
     start_dream.assert_called_once()
+    assert start_dream.call_args.kwargs.get("interval") == 10
     stop_think.assert_called_once()
 
     scheduler.notify_input()

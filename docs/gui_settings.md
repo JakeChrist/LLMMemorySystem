@@ -17,6 +17,10 @@ fields correspond to:
   backend. Set the value to `0` to wait indefinitely. This option only appears
   when the active LLM is LMStudio.
 
+`T_think` and `T_dream` also determine how frequently the thinking and dreaming
+engines run once started. Lower values result in more frequent background
+updates.
+
 Changes are applied immediately to the attached scheduler and any running
 background tasks are restarted. When using the LMStudio backend, the timeout
 for API requests can also be tuned here. Setting the value to ``0`` has the same
