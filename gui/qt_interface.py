@@ -21,6 +21,8 @@ from PyQt5.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
     QFileDialog,
+    QComboBox,
+    QLineEdit,
 )
 from PyQt5.QtCore import Qt, QTimer
 import sys
@@ -29,6 +31,9 @@ from ms_utils import format_context
 from encoding.tagging import tag_text
 from core.memory_entry import MemoryEntry
 from llm.lmstudio_api import LMStudioBackend
+from llm import llm_router
+from core.memory_manager import MemoryManager
+from pathlib import Path
 from addons import memory_constructor
 
 
@@ -132,8 +137,25 @@ class SchedulerSettingsDialog(QDialog):
         self.alarm_spin.setValue(scheduler.T_alarm)
         form.addRow("T_alarm (s)", self.alarm_spin)
 
-        self.lmstudio_timeout_spin = None
         agent = getattr(scheduler, "agent", None)
+
+        self.model_combo = QComboBox()
+        self.model_combo.addItems(["local", "openai", "claude", "gemini", "lmstudio"])
+        if getattr(scheduler, "llm_name", None):
+            self.model_combo.setCurrentText(scheduler.llm_name)
+        form.addRow("LLM backend", self.model_combo)
+
+        self.db_edit = QLineEdit()
+        if agent and getattr(agent, "memory", None):
+            self.db_edit.setText(str(agent.memory.db.path))
+        db_row = QHBoxLayout()
+        db_row.addWidget(self.db_edit)
+        browse = QPushButton("Browse")
+        browse.clicked.connect(self._choose_db)
+        db_row.addWidget(browse)
+        form.addRow("Database file", db_row)
+
+        self.lmstudio_timeout_spin = None
         if agent and isinstance(getattr(agent, "llm", None), LMStudioBackend):
             self.lmstudio_timeout_spin = QDoubleSpinBox()
             self.lmstudio_timeout_spin.setRange(0.0, 600.0)
@@ -158,12 +180,20 @@ class SchedulerSettingsDialog(QDialog):
             timeout = None if val == 0 else val
         else:
             timeout = None
+
         return (
             self.think_spin.value(),
             self.dream_spin.value(),
             self.alarm_spin.value(),
             timeout,
+            self.model_combo.currentText(),
+            self.db_edit.text(),
         )
+
+    def _choose_db(self) -> None:
+        path, _ = QFileDialog.getOpenFileName(self, "Select Database")
+        if path:
+            self.db_edit.setText(path)
 
 class ChatBubble(QLabel):
     """Simple word-wrapped label styled as a chat message bubble."""
@@ -480,17 +510,28 @@ class MemorySystemGUI(QWidget):
             return
         dlg = SchedulerSettingsDialog(self.scheduler)
         if dlg.exec() == QDialog.Accepted:
-            think, dream, alarm, timeout = dlg.values()
+            think, dream, alarm, timeout, llm_name, db_path = dlg.values()
             self.scheduler.T_think = think
             self.scheduler.T_dream = dream
             self.scheduler.T_alarm = alarm
+            self.scheduler.llm_name = llm_name
             self.scheduler.notify_input()
-            if self.agent and isinstance(self.agent.llm, LMStudioBackend):
-                self.agent.llm.timeout = timeout
-                if timeout is None:
-                    os.environ["LMSTUDIO_TIMEOUT"] = "none"
-                else:
-                    os.environ["LMSTUDIO_TIMEOUT"] = str(timeout)
+
+            if self.agent:
+                if self.agent.llm_name != llm_name:
+                    self.agent.llm_name = llm_name
+                    self.agent.llm = llm_router.get_llm(llm_name)
+
+                if str(self.agent.memory.db.path) != db_path:
+                    self.agent.memory = MemoryManager(db_path=db_path)
+                    self.scheduler.manager = self.agent.memory
+
+                if isinstance(self.agent.llm, LMStudioBackend):
+                    self.agent.llm.timeout = timeout
+                    if timeout is None:
+                        os.environ["LMSTUDIO_TIMEOUT"] = "none"
+                    else:
+                        os.environ["LMSTUDIO_TIMEOUT"] = str(timeout)
 
     def show_memories(self):
         if not self.agent:

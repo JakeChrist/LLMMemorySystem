@@ -212,16 +212,21 @@ def test_settings_dialog_updates_scheduler(monkeypatch):
             return QDialog.Accepted
 
         def values(self):
-            return 1.0, 2.0, 3.0
+            return 1.0, 2.0, 3.0, None, "openai", "new.db"
 
     monkeypatch.setattr(gui_mod, "SchedulerSettingsDialog", FakeDialog)
+    mock_llm = MagicMock()
+    monkeypatch.setattr(gui_mod.llm_router, "get_llm", mock_llm)
+    monkeypatch.setattr(gui_mod, "MemoryManager", MagicMock(side_effect=AssertionError))
 
     gui.settings_action.trigger()
 
     assert scheduler.T_think == 1.0
     assert scheduler.T_dream == 2.0
     assert scheduler.T_alarm == 3.0
+    assert scheduler.llm_name == "openai"
     assert scheduler.notify_input.called
+    assert not mock_llm.called
 
     app.quit()
 
@@ -238,6 +243,8 @@ def test_settings_dialog_updates_lmstudio_timeout(monkeypatch):
     scheduler.T_alarm = 20.0
     scheduler.notify_input = MagicMock()
     scheduler.agent = agent
+    scheduler.manager = agent.memory
+    scheduler.llm_name = "lmstudio"
 
     gui = MemorySystemGUI(agent, scheduler=scheduler)
     assert isinstance(gui.menu_bar, QMenuBar)
@@ -250,9 +257,16 @@ def test_settings_dialog_updates_lmstudio_timeout(monkeypatch):
             return QDialog.Accepted
 
         def values(self):
-            return 1.0, 2.0, 3.0, 42.0
+            return 1.0, 2.0, 3.0, 42.0, "openai", str(tmp_path / "new.db")
 
     monkeypatch.setattr(gui_mod, "SchedulerSettingsDialog", FakeDialog)
+    new_llm = MagicMock()
+    monkeypatch.setattr(gui_mod.llm_router, "get_llm", lambda name: new_llm)
+    paths = {}
+    def fake_mm(path):
+        paths["db"] = path
+        return MagicMock(db=MagicMock(path=Path(path)))
+    monkeypatch.setattr(gui_mod, "MemoryManager", fake_mm)
 
     monkeypatch.setenv("LMSTUDIO_TIMEOUT", "15")
     gui.settings_action.trigger()
@@ -260,6 +274,10 @@ def test_settings_dialog_updates_lmstudio_timeout(monkeypatch):
     assert scheduler.T_think == 1.0
     assert scheduler.T_dream == 2.0
     assert scheduler.T_alarm == 3.0
+    assert agent.llm is new_llm
+    assert scheduler.llm_name == "openai"
+    assert paths["db"] == str(tmp_path / "new.db")
+    assert scheduler.manager is agent.memory
     assert agent.llm.timeout == 42.0
     assert scheduler.notify_input.called
     assert os.getenv("LMSTUDIO_TIMEOUT") == "42.0"
