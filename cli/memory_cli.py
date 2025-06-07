@@ -486,6 +486,8 @@ def main(argv: list[str] | None = None) -> None:
     elif args.cmd == "add-biography":
         import_biography(args.file, args.agent)
 
+    db.close()
+
 
 if __name__ == "__main__":
     main()

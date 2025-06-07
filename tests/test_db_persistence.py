@@ -22,6 +22,7 @@ def test_round_trip_embedding_and_metadata(tmp_path):
     loaded_entry = loaded[0]
     assert loaded_entry.embedding == entry.embedding
     assert loaded_entry.metadata == entry.metadata
+    db.close()
 
 
 def test_semantic_and_procedural_round_trip(tmp_path):
@@ -40,6 +41,7 @@ def test_semantic_and_procedural_round_trip(tmp_path):
     assert loaded_sem.metadata == sem.metadata
     assert loaded_proc.content == proc.content
     assert loaded_proc.metadata == proc.metadata
+    db.close()
 
 
 def test_memory_manager_loads_existing_entries(tmp_path):

@@ -21,6 +21,11 @@ class Database:
         self._lock = threading.Lock()
         self._setup()
 
+    def close(self) -> None:
+        """Close the underlying SQLite connection."""
+        with self._lock:
+            self.conn.close()
+
     def _setup(self) -> None:
         with self._lock:
             cur = self.conn.cursor()

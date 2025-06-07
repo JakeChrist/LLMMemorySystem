@@ -85,6 +85,7 @@ def test_agent_and_cli_end_to_end(tmp_path, capsys):
         memory_cli.dream_summary(db)
     out = capsys.readouterr().out
     assert "Dream:" in out
+    db.close()
 
 
 def test_lmstudio_timeout_env(monkeypatch):

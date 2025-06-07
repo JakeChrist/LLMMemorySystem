@@ -40,6 +40,7 @@ def test_cli_flow(tmp_path, capsys, monkeypatch):
     memory_cli.list_memories(db)
     out = capsys.readouterr().out
     assert out.strip() == ""
+    db.close()
 
 
 def test_model_argument_passed(tmp_path):
@@ -55,6 +56,7 @@ def test_model_argument_passed(tmp_path):
         memory_cli.add_memory(db, "hello", model="test-model")
 
     assert called["model"] == "test-model"
+    db.close()
 
 
 def test_edit_and_delete(tmp_path, capsys, monkeypatch):
@@ -74,6 +76,7 @@ def test_edit_and_delete(tmp_path, capsys, monkeypatch):
     out = capsys.readouterr().out
     assert "Memory deleted." in out
     assert db.load_all() == []
+    db.close()
 
 
 def test_semantic_and_procedural_cli(tmp_path, capsys, monkeypatch):
@@ -114,6 +117,7 @@ def test_semantic_and_procedural_cli(tmp_path, capsys, monkeypatch):
     out = capsys.readouterr().out
     assert "Procedural memory deleted." in out
     assert db.load_all_procedural() == []
+    db.close()
 
 
 def test_start_and_stop_dreaming(monkeypatch):
@@ -208,6 +212,7 @@ def test_reset_database_clears_all_categories(tmp_path):
     assert db.load_all() == []
     assert db.load_all_semantic() == []
     assert db.load_all_procedural() == []
+    db.close()
 
 
 def test_import_conversation(tmp_path, capsys, monkeypatch):
@@ -229,6 +234,7 @@ def test_import_conversation(tmp_path, capsys, monkeypatch):
     assert len(entries) == 2
     assert entries[0].metadata["source"] == "transcript"
     assert entries[0].metadata["speaker"] == "Alice"
+    db.close()
 
 
 def test_import_biography(tmp_path, capsys, monkeypatch):
@@ -256,6 +262,7 @@ def test_import_biography(tmp_path, capsys, monkeypatch):
     assert len(proc) == 1
     for e in epis + sem + proc:
         assert e.metadata["source"] == "biography"
+    db.close()
 
 
 def test_import_conversation_calls_constructor(tmp_path, monkeypatch, capsys):

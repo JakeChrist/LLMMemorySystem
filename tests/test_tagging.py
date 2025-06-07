@@ -14,3 +14,4 @@ def test_tagging_with_float_embeddings(tmp_path):
         memory_cli.add_memory(db, "hello cat")
     stored = db.load_all()[0]
     assert set(stored.metadata.get("tags")) == {"animal", "greeting"}
+    db.close()
