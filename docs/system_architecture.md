@@ -52,3 +52,7 @@ response using a pluggable LLM backend. The main subsystems are shown below.
 Episodic experiences feed into semantic summaries during dreaming and may form
 procedural memories manually. Retrieval queries all stores so that facts,
 procedures and recent events together influence the generated reply.
+
+## License
+
+This documentation is licensed under the [MIT License](../LICENSE). Copyright (c) 2024 Jacob Christ.

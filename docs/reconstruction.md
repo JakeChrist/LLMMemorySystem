@@ -6,3 +6,7 @@ The default value is `1000` characters which allows relatively long memory text 
 
 To adjust the limit for a specific agent, copy `default_config.yaml` and modify the `reconstruction.max_context_length` field. Then pass the path via the agent's configuration loading logic or instantiate `Reconstructor(max_context_length=VALUE)` directly.
 
+
+## License
+
+This documentation is licensed under the [MIT License](../LICENSE). Copyright (c) 2024 Jacob Christ.

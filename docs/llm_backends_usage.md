@@ -112,3 +112,7 @@ python -m cli.memory_cli --llm openai start-dream --llm local
 The second command uses the OpenAI backend globally but falls back to the local
 model just for dreaming.
 
+
+## License
+
+This documentation is licensed under the [MIT License](../LICENSE). Copyright (c) 2024 Jacob Christ.
