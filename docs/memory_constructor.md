@@ -46,3 +46,7 @@ python main.py cli add-biography bio.txt --agent Thorne
 
 In the **Import** tab choose **Choose Biography**, review the preview and use
 **Import** to load the sentences.
+
+## License
+
+This documentation is licensed under the [MIT License](../LICENSE). Copyright (c) 2024 Jacob Christ.

@@ -14,3 +14,7 @@ for selecting a text file. The contents are shown in a read-only preview before
 pressing **Import** to ingest the data or **Cancel** to discard it.
 
 Each tab uses a scrolling list of chat bubbles similar to the conversation view. Background entries are appended automatically when they are generated. The "Browse" tab replaces the old **Browse Memories** button and presents every stored memory in a sortable table.
+
+## License
+
+This documentation is licensed under the [MIT License](../LICENSE). Copyright (c) 2024 Jacob Christ.

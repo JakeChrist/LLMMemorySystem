@@ -118,3 +118,7 @@ print(top.content)  # -> "lost my toy"
 All user messages, assistant replies, introspective thoughts and dream
 summaries are analyzed for emotional tone.  The detected labels and
 scores are stored with each memory entry.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE). Copyright (c) 2024 Jacob Christ.

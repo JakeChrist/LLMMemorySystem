@@ -114,3 +114,7 @@ python main.py repl --llm openai --db ./my.db
 python main.py gui --llm openai --db ./my.db
 python main.py cli --db ./my.db list
 ```
+
+## License
+
+This documentation is licensed under the [MIT License](../LICENSE). Copyright (c) 2024 Jacob Christ.

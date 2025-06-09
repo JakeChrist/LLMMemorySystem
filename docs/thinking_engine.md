@@ -114,3 +114,7 @@ Each thought entry must store:
 - **Cognitive State:** Internal status (Active, Reflective, Asleep) guiding processes.
 - **Alarm:** Mechanism to limit maximum time in a non-interactive state.
 
+
+## License
+
+This documentation is licensed under the [MIT License](../LICENSE). Copyright (c) 2024 Jacob Christ.

@@ -15,3 +15,7 @@ engines.
 The scheduler forwards the agent's configured LLM backend to both the thinking
 and dreaming engines so background activities use the same model as interactive
 conversations.
+
+## License
+
+This documentation is licensed under the [MIT License](../LICENSE). Copyright (c) 2024 Jacob Christ.

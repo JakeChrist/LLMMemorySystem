@@ -32,3 +32,7 @@ The values chosen in the settings dialog are saved to
 ``~/.llmemory_gui.json``. When the GUI starts again these settings are
 loaded automatically so the scheduler and LLM options continue from the
 previous session.
+
+## License
+
+This documentation is licensed under the [MIT License](../LICENSE). Copyright (c) 2024 Jacob Christ.
