@@ -36,9 +36,22 @@ def test_run_invokes_think_once(tmp_path):
 
     with patch("ms_utils.scheduler.Scheduler.schedule", side_effect=immediate):
         with patch.object(engine, "think_once", return_value="x") as mock_once:
-            sched = engine.run(manager, interval=0.1)
+            sched = engine.run(manager, interval=0.1, duration=0.2)
     assert isinstance(sched, Scheduler)
     assert mock_once.called
+
+
+def test_run_stops_after_duration(tmp_path):
+    manager = MemoryManager(db_path=tmp_path / "mem.db")
+    engine = ThinkingEngine(prompts=["reflect"])
+
+    def immediate(interval, func, *args, **kwargs):
+        func(*args, **kwargs)
+
+    with patch("ms_utils.scheduler.Scheduler.schedule", side_effect=immediate), \
+            patch("ms_utils.scheduler.Scheduler.stop") as mock_stop:
+        engine.run(manager, interval=0.1, duration=0.2)
+    assert mock_stop.called
 
 
 def test_manager_start_thinking_uses_engine():
@@ -49,6 +62,7 @@ def test_manager_start_thinking_uses_engine():
         mock_run.assert_called_once()
         _, kwargs = mock_run.call_args
         assert kwargs.get("llm_name") == "openai"
+        assert kwargs.get("duration") is None
 
 
 def test_start_thinking_stops_dreaming():

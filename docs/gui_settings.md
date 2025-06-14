@@ -8,8 +8,8 @@ Use the *Settings* action in the window's menu bar to open the dialog. Older
 versions exposed a separate button on the side panel. The
 fields correspond to:
 
-- `T_think` – seconds of inactivity before background thinking starts.
-- `T_dream` – idle time before the DreamEngine is triggered.
+- `T_think` – how long the agent remains reflective once thinking begins.
+- `T_dream` – duration of the dreaming state before waking.
 - `T_alarm` – maximum duration of dreaming before waking automatically.
 - `LLM backend` – selects which language model implementation to use.
 - `Database file` – location of the SQLite memory store.
@@ -17,9 +17,9 @@ fields correspond to:
   backend. Set the value to `0` to wait indefinitely. This option only appears
   when the active LLM is LMStudio.
 
-`T_think` and `T_dream` also determine how frequently the thinking and dreaming
-engines run once started. Lower values result in more frequent background
-updates.
+`T_think` and `T_dream` specify how long the agent remains in each state when
+no user input is received. Lower values lead to shorter reflection and dreaming
+periods before transitioning.
 
 Changes are applied immediately to the attached scheduler and any running
 background tasks are restarted. When using the LMStudio backend, the timeout

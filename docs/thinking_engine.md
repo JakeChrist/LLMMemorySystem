@@ -65,8 +65,8 @@ The ThinkingEngine and DreamEngine coordinate via a cognitive activity cycle bas
 | State | Trigger Condition | Action Initiated | Notes |
 |-------|------------------|-----------------|-------|
 | Active | Any user input | Normal behavior; thinking and dreaming paused | |
-| Reflective | No input for `T_think` seconds | Start ThinkingEngine | May loop through multiple thoughts |
-| Asleep | No input for `T_dream` > `T_think` | Start DreamEngine | Ends with alarm or stimulus |
+| Reflective | Idle for `T_think` seconds | Think for `T_think` seconds | May loop through multiple thoughts |
+| Asleep | Reflection period ended | Dream for `T_dream` seconds | Ends with alarm or stimulus |
 | Interrupted | Any input during reflection or dreaming | Wake agent, cancel tasks | May log partial output |
 | Alarmed | Max sleep duration (`T_alarm`) exceeded | Automatically awaken | Prevents excessive dreaming |
 
