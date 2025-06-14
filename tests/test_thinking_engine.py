@@ -27,7 +27,27 @@ def test_think_once_stores_introspection():
     mock_update.assert_not_called()
 
 
-def test_run_invokes_think_once(tmp_path):
+def test_think_chain_uses_previous_thought(tmp_path):
+    manager = MemoryManager(db_path=tmp_path / "mem.db")
+    engine = ThinkingEngine(prompts=["reflect"])
+
+    with patch("thinking.thinking_engine.llm_router.get_llm") as mock_get, \
+            patch("retrieval.cue_builder.build_cue", return_value="cue"), \
+            patch("retrieval.retriever.Retriever.query", return_value=[]), \
+            patch("reconstruction.reconstructor.Reconstructor.build_context", return_value=""), \
+            patch("reasoning.reasoning_engine.ReasoningEngine.reason_once", return_value="a"):
+        mock_llm = MagicMock()
+        mock_llm.generate.side_effect = ["thought1", "thought2"]
+        mock_get.return_value = mock_llm
+        result = engine.think_chain(manager, "neutral", steps=2)
+
+    assert result == "thought2"
+    entries = manager.all()[-2:]
+    assert entries[0].metadata.get("prompt") == "reflect"
+    assert entries[1].metadata.get("prompt") == "thought1"
+
+
+def test_run_invokes_think_chain(tmp_path):
     manager = MemoryManager(db_path=tmp_path / "mem.db")
     engine = ThinkingEngine(prompts=["reflect"])
 
@@ -35,9 +55,9 @@ def test_run_invokes_think_once(tmp_path):
         func(*args, **kwargs)
 
     with patch("ms_utils.scheduler.Scheduler.schedule", side_effect=immediate):
-        with patch.object(engine, "think_once", return_value="x") as mock_once:
+        with patch.object(engine, "think_chain", return_value="x") as mock_chain:
             sched = engine.run(manager, think_interval=0.1, duration=0.2)
-            call_count = mock_once.call_count
+            call_count = mock_chain.call_count
     assert isinstance(sched, Scheduler)
     assert call_count > 1
 
@@ -47,9 +67,9 @@ def test_run_executes_without_scheduler(tmp_path):
     engine = ThinkingEngine(prompts=["reflect"])
 
     with patch("ms_utils.scheduler.Scheduler.schedule", lambda *a, **k: None):
-        with patch.object(engine, "think_once", return_value="x") as mock_once:
+        with patch.object(engine, "think_chain", return_value="x") as mock_chain:
             engine.run(manager, think_interval=0.1, duration=0.1)
-    assert mock_once.called
+    assert mock_chain.called
 
 
 def test_run_stops_after_duration(tmp_path):
