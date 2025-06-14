@@ -11,11 +11,15 @@ from retrieval.retriever import Retriever
 from reconstruction.reconstructor import Reconstructor
 from llm import llm_router
 from ms_utils import Scheduler
+from ms_utils.logger import Logger
 from core.emotion_model import analyze_emotions
 from reasoning import ReasoningEngine
 
 if TYPE_CHECKING:  # pragma: no cover - for type hints only
     from core.memory_manager import MemoryManager
+
+
+logger = Logger(__name__)
 
 
 class ThinkingEngine:
@@ -70,7 +74,11 @@ class ThinkingEngine:
             },
             {"role": "user", "content": full_prompt},
         ]
-        thought = llm.generate(messages).strip()
+        try:
+            thought = llm.generate(messages).strip()
+        except Exception as exc:  # pragma: no cover - log and continue
+            logger.warning(f"LLM generate failed: {exc}")
+            return ""
         emotions = analyze_emotions(thought)
         if emotions:
             mood = emotions[0][0]
