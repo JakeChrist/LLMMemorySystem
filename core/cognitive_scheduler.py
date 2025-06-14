@@ -83,7 +83,13 @@ class CognitiveScheduler:
         return self.state
 
     def run(self, interval: float = 1.0) -> Scheduler:
-        """Start periodic state checks."""
+        """Start periodic state checks.
+
+        An initial call to :meth:`check` is made before setting up the
+        recurring scheduler so state transitions happen without waiting for the
+        first interval.
+        """
+        self.check()
         sched = Scheduler()
         sched.schedule(interval, self.check)
         return sched
