@@ -12,6 +12,7 @@ from reconstruction.reconstructor import Reconstructor
 from llm import llm_router
 from ms_utils import Scheduler
 from core.emotion_model import analyze_emotions
+from reasoning import ReasoningEngine
 
 if TYPE_CHECKING:  # pragma: no cover - for type hints only
     from core.memory_manager import MemoryManager
@@ -41,6 +42,7 @@ class ThinkingEngine:
         manager: "MemoryManager",
         mood: str,
         llm_name: str = "local",
+        use_reasoning: bool = False,
     ) -> str:
         """Generate one introspective thought.
 
@@ -52,6 +54,9 @@ class ThinkingEngine:
             Current emotional state used to bias retrieval.
         llm_name:
             Name of the LLM backend to use.
+        use_reasoning:
+            If ``True``, generate an additional reasoning step about the
+            produced thought.
 
         Returns
         -------
@@ -90,6 +95,9 @@ class ThinkingEngine:
             emotion_scores={lbl: score for lbl, score in emotions},
             metadata={"prompt": prompt, "tags": ["introspection"]},
         )
+        if use_reasoning:
+            reasoning_engine = ReasoningEngine()
+            reasoning_engine.reason_once(manager, thought, llm_name=llm_name)
         return thought
 
     def run(
@@ -98,6 +106,7 @@ class ThinkingEngine:
         *,
         interval: float = 60.0,
         llm_name: str = "local",
+        use_reasoning: bool = False,
     ) -> Scheduler:
         """Start periodic background thinking.
 
@@ -109,6 +118,9 @@ class ThinkingEngine:
             Seconds between each introspection.
         llm_name:
             Name of the LLM backend to use.
+        use_reasoning:
+            If ``True``, run :meth:`ReasoningEngine.reason_once` after each
+            introspective thought.
 
         Returns
         -------
@@ -125,7 +137,12 @@ class ThinkingEngine:
             if entries and entries[-1].emotion_scores:
                 scores = entries[-1].emotion_scores
                 mood = max(scores, key=scores.get)
-            self.think_once(manager, mood, llm_name=llm_name)
+            self.think_once(
+                manager,
+                mood,
+                llm_name=llm_name,
+                use_reasoning=use_reasoning,
+            )
             manager._next_think_time = time.monotonic() + interval
 
         scheduler.schedule(interval, _task)
