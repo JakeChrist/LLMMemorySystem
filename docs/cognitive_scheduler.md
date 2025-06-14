@@ -8,6 +8,8 @@ three states:
 - **Reflective** – after `T_think` seconds of inactivity the agent thinks for that duration
 - **Asleep** – once reflection ends the agent dreams for `T_dream` seconds
 
+State transitions wait at least `T_delay` seconds before the next phase begins.
+
 Dreaming is automatically stopped after `T_alarm` seconds to prevent endless
 sleep. Any user activity immediately wakes the scheduler and cancels running
 engines.

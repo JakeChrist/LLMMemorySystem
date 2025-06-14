@@ -30,6 +30,7 @@ class CognitiveScheduler:
         T_dream: float = 300.0,
         T_alarm: float = 1200.0,
         think_interval: float | None = None,
+        T_delay: float = 1.0,
     ) -> None:
         """Create a scheduler for ``manager`` using ``llm_name`` for background tasks.
 
@@ -47,6 +48,8 @@ class CognitiveScheduler:
             Maximum sleep duration before automatically waking.
         think_interval:
             Seconds between reflective thoughts while in the reflective state.
+        T_delay:
+            Minimum seconds to wait between consecutive state transitions.
         """
 
         self.manager = manager
@@ -55,9 +58,11 @@ class CognitiveScheduler:
         self.T_dream = T_dream
         self.T_alarm = T_alarm
         self.think_interval = think_interval if think_interval is not None else T_think
+        self.T_delay = T_delay
         self.state = CognitiveState.ACTIVE
         self.last_input = time.monotonic()
         self.state_start = self.last_input
+        self._last_transition = self.last_input
         self._think_sched: Optional[Scheduler] = None
         self._dream_sched: Optional[Scheduler] = None
 
@@ -68,6 +73,7 @@ class CognitiveScheduler:
         if self.state != CognitiveState.ACTIVE:
             self._stop_engines()
             self.state = CognitiveState.ACTIVE
+        self._last_transition = self.last_input
 
     def current_state(self) -> CognitiveState:
         """Return the current cognitive state."""
@@ -86,12 +92,15 @@ class CognitiveScheduler:
         next invocation transitions into the reflective state after ``T_think``.
         """
         now = time.monotonic()
+        if now - self._last_transition < self.T_delay:
+            return
         idle = now - self.last_input
 
         if self.state == CognitiveState.ACTIVE:
             if idle >= self.T_think:
                 self.state = CognitiveState.REFLECTIVE
                 self.state_start = now
+                self._last_transition = now
                 self._think_sched = self.manager.start_thinking(
                     think_interval=self.think_interval,
                     duration=self.T_think,
@@ -104,6 +113,7 @@ class CognitiveScheduler:
                     self._think_sched = None
                 self.state = CognitiveState.ASLEEP
                 self.state_start = now
+                self._last_transition = now
                 self._dream_sched = self.manager.start_dreaming(
                     interval=self.T_dream,
                     duration=self.T_dream,
@@ -119,6 +129,7 @@ class CognitiveScheduler:
                 self.last_input = now - self.T_think
                 self.state = CognitiveState.ACTIVE
                 self.state_start = now
+                self._last_transition = now
 
     def _stop_engines(self) -> None:
         if self._think_sched:
