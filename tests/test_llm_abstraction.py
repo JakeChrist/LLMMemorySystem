@@ -10,6 +10,7 @@ from llm.openai_api import OpenAIBackend
 from llm.claude_api import ClaudeBackend
 from llm.gemini_api import GeminiBackend
 from llm.lmstudio_api import LMStudioBackend
+import llm.lmstudio_api as lmstudio_api
 from core.agent import Agent
 from retrieval.retriever import Retriever
 from reconstruction.reconstructor import Reconstructor
@@ -110,3 +111,19 @@ def test_lmstudio_timeout_env_none(monkeypatch):
     monkeypatch.setenv("LMSTUDIO_TIMEOUT", "none")
     backend = LMStudioBackend()
     assert backend.timeout is None
+
+
+def test_lmstudio_auto_model(monkeypatch):
+    monkeypatch.delenv("LMSTUDIO_MODEL", raising=False)
+
+    class FakeResp:
+        def json(self):
+            return {"data": [{"id": "auto-model"}]}
+
+    class FakeRequests:
+        def get(self, url, timeout=None):
+            return FakeResp()
+
+    monkeypatch.setattr(lmstudio_api, "requests", FakeRequests())
+    backend = LMStudioBackend()
+    assert backend.model == "auto-model"

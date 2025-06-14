@@ -31,14 +31,17 @@ class LMStudioBackend(BaseLLM):
         url:
             Endpoint for the LMStudio chat completion API.
         model:
-            Model name to use for requests.
+            Model name to use for requests. If omitted and ``LMSTUDIO_MODEL`` is
+            not set, the backend attempts to detect the loaded model from the
+            LMStudio server.
         timeout:
             Request timeout in seconds. Pass ``None`` to disable. Defaults to
             the ``LMSTUDIO_TIMEOUT`` environment variable or ``30`` seconds.
         """
 
-        self.url = url or os.getenv("LMSTUDIO_URL", "http://localhost:1234/v1/chat/completions")
-        self.model = model or os.getenv("LMSTUDIO_MODEL", "local")
+        self.url = url or os.getenv(
+            "LMSTUDIO_URL", "http://localhost:1234/v1/chat/completions"
+        )
         env_timeout = os.getenv("LMSTUDIO_TIMEOUT")
         if env_timeout is not None:
             env_timeout = env_timeout.strip().lower()
@@ -56,6 +59,35 @@ class LMStudioBackend(BaseLLM):
                 self.timeout = 30.0
         else:
             self.timeout = timeout
+
+        if model is not None:
+            self.model = model
+        else:
+            env_model = os.getenv("LMSTUDIO_MODEL")
+            if env_model:
+                self.model = env_model
+            else:
+                detected = self._detect_model()
+                self.model = detected or "local"
+
+    def _detect_model(self) -> str | None:
+        """Attempt to detect the active model from the LMStudio server."""
+
+        if requests is None:
+            return None
+        try:
+            models_url = self.url.replace("chat/completions", "models")
+            resp = requests.get(models_url, timeout=self.timeout or 5)
+            data: Any = resp.json()
+            models = data.get("data") or data.get("models")
+            if isinstance(models, list) and models:
+                first = models[0]
+                if isinstance(first, dict):
+                    return str(first.get("id"))
+                return str(first)
+        except Exception:
+            return None
+        return None
 
     def generate(self, prompt: str | list[dict[str, str]]) -> str:
         """Generate a completion for ``prompt`` using the LMStudio server."""
