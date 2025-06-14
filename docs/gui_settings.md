@@ -10,7 +10,6 @@ fields correspond to:
 
 - `T_think` – how long the agent remains reflective once thinking begins.
 - `T_dream` – duration of the dreaming state before waking.
-- `T_alarm` – maximum duration of dreaming before waking automatically.
 - `T_delay` – seconds to wait between cognitive state changes.
 - `LLM backend` – selects which language model implementation to use.
 - `Database file` – location of the SQLite memory store.

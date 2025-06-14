@@ -72,9 +72,7 @@ The ThinkingEngine and DreamEngine coordinate via a cognitive activity cycle bas
 | Reflective | Idle for `T_think` seconds | Think for `T_think` seconds | May loop through multiple thoughts |
 | Asleep | Reflection period ended | Dream for `T_dream` seconds | Ends with alarm or stimulus |
 | Interrupted | Any input during reflection or dreaming | Wake agent, cancel tasks | May log partial output |
-| Alarmed | Max sleep duration (`T_alarm`) exceeded | Automatically awaken | Prevents excessive dreaming |
-
-Recommended defaults: `T_think` 30–90 seconds, `T_dream` 5–15 minutes, `T_alarm` 20–30 minutes.
+Recommended defaults: `T_think` 30–90 seconds, `T_dream` 5–15 minutes.
 
 #### 3.3.3 Scheduling Logic
 The system monitors agent activity and idle time. A scheduler tracks state transitions, prevents overlapping execution of ThinkingEngine and DreamEngine, and cancels tasks upon user input. When waking, the system logs interruption events and resumes the Active state.

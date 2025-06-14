@@ -28,7 +28,6 @@ class CognitiveScheduler:
         llm_name: str = "local",
         T_think: float = 60.0,
         T_dream: float = 300.0,
-        T_alarm: float = 1200.0,
         think_interval: float = 60.0,
         dream_interval: float = 300.0,
         T_delay: float = 1.0,
@@ -45,8 +44,6 @@ class CognitiveScheduler:
             Duration in seconds to remain in the reflective state.
         T_dream:
             Duration in seconds to remain asleep and dreaming.
-        T_alarm:
-            Maximum sleep duration before automatically waking.
         think_interval:
             Seconds between reflective thoughts while in the reflective state.
         dream_interval:
@@ -59,7 +56,6 @@ class CognitiveScheduler:
         self.llm_name = llm_name
         self.T_think = T_think
         self.T_dream = T_dream
-        self.T_alarm = T_alarm
         self.think_interval = think_interval
         self.dream_interval = dream_interval
         self.T_delay = T_delay
@@ -121,7 +117,7 @@ class CognitiveScheduler:
                 )
         elif self.state == CognitiveState.ASLEEP:
             elapsed = now - self.state_start
-            if elapsed >= self.T_dream or elapsed >= self.T_alarm:
+            if elapsed >= self.T_dream:
                 if self._dream_sched:
                     self.manager.stop_dreaming()
                     self._dream_sched = None
