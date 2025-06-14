@@ -54,7 +54,8 @@ def test_alarm_wakes(monkeypatch):
     monkeypatch.setattr(mm, "start_dreaming", MagicMock())
     stop_dream = MagicMock()
     monkeypatch.setattr(mm, "stop_dreaming", stop_dream)
-    monkeypatch.setattr(mm, "start_thinking", MagicMock())
+    start_think = MagicMock()
+    monkeypatch.setattr(mm, "start_thinking", start_think)
     monkeypatch.setattr(mm, "stop_thinking", MagicMock())
 
     sched.check()
@@ -68,7 +69,8 @@ def test_alarm_wakes(monkeypatch):
     assert stop_dream.called
 
     sched.check()
-    assert sched.current_state() is CognitiveState.ACTIVE
+    assert sched.current_state() is CognitiveState.REFLECTIVE
+    assert start_think.call_count == 2
 
 def test_idle_period_transitions(monkeypatch):
     mm = MemoryManager(db_path=":memory:")

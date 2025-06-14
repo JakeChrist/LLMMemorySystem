@@ -80,7 +80,11 @@ class CognitiveScheduler:
         return sched
 
     def check(self) -> None:
-        """Evaluate idle time and update cognitive state."""
+        """Evaluate idle time and update cognitive state.
+
+        When waking automatically from sleep, ``last_input`` is adjusted so the
+        next invocation transitions into the reflective state after ``T_think``.
+        """
         now = time.monotonic()
         idle = now - self.last_input
 
@@ -111,7 +115,8 @@ class CognitiveScheduler:
                 if self._dream_sched:
                     self.manager.stop_dreaming()
                     self._dream_sched = None
-                self.last_input = now
+                # Automatically queue the next reflective phase
+                self.last_input = now - self.T_think
                 self.state = CognitiveState.ACTIVE
                 self.state_start = now
 
