@@ -37,6 +37,55 @@ class ThinkingEngine:
     def _select_prompt(self) -> str:
         return random.choice(self.prompts)
 
+    def _generate_thought(
+        self,
+        manager: "MemoryManager",
+        prompt: str,
+        mood: str,
+        llm_name: str,
+        *,
+        use_reasoning: bool = False,
+        reasoning_depth: int = 1,
+    ) -> str:
+        """Internal helper to generate and store a single thought."""
+
+        cue = build_cue(prompt, state={"mood": mood})
+        retriever = Retriever(
+            manager.all(),
+            semantic=manager.semantic.all(),
+            procedural=manager.procedural.all(),
+        )
+        memories = retriever.query(cue, top_k=5, mood=mood)
+        reconstructor = Reconstructor()
+        context = reconstructor.build_context(memories, mood=mood)
+        full_prompt = f"{context}\n{prompt}" if context else prompt
+        llm = llm_router.get_llm(llm_name)
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are thinking internally. Respond with a single "
+                    "first-person thought without addressing anyone as 'you'."
+                ),
+            },
+            {"role": "user", "content": full_prompt},
+        ]
+        thought = llm.generate(messages).strip()
+        emotions = analyze_emotions(thought)
+        if emotions:
+            mood = emotions[0][0]
+        manager.add(
+            thought,
+            emotions=[e[0] for e in emotions],
+            emotion_scores={lbl: score for lbl, score in emotions},
+            metadata={"prompt": prompt, "tags": ["introspection"]},
+        )
+        if use_reasoning:
+            ReasoningEngine().reason_once(
+                manager, thought, llm_name=llm_name, depth=reasoning_depth
+            )
+        return thought
+
     def think_once(
         self,
         manager: "MemoryManager",
@@ -67,42 +116,39 @@ class ThinkingEngine:
             The generated thought.
         """
         prompt = self._select_prompt()
-        cue = build_cue(prompt, state={"mood": mood})
-        retriever = Retriever(
-            manager.all(),
-            semantic=manager.semantic.all(),
-            procedural=manager.procedural.all(),
+        return self._generate_thought(
+            manager,
+            prompt,
+            mood,
+            llm_name,
+            use_reasoning=use_reasoning,
+            reasoning_depth=reasoning_depth,
         )
-        memories = retriever.query(cue, top_k=5, mood=mood)
-        reconstructor = Reconstructor()
-        context = reconstructor.build_context(memories, mood=mood)
-        full_prompt = f"{context}\n{prompt}" if context else prompt
-        llm = llm_router.get_llm(llm_name)
-        messages = [
-            {
-                "role": "system",
-                "content": (
-                    "You are thinking internally. Respond with a single "
-                    "first-person thought without addressing anyone as 'you'."
-                ),
-            },
-            {"role": "user", "content": full_prompt},
-        ]
-        thought = llm.generate(messages).strip()
-        emotions = analyze_emotions(thought)
-        if emotions:
-            mood = emotions[0][0]
-        entry = manager.add(
-            thought,
-            emotions=[e[0] for e in emotions],
-            emotion_scores={lbl: score for lbl, score in emotions},
-            metadata={"prompt": prompt, "tags": ["introspection"]},
-        )
-        if use_reasoning:
-            reasoning_engine = ReasoningEngine()
-            reasoning_engine.reason_once(
-                manager, thought, llm_name=llm_name, depth=reasoning_depth
+
+    def think_chain(
+        self,
+        manager: "MemoryManager",
+        mood: str,
+        *,
+        steps: int = 1,
+        llm_name: str = "local",
+        reasoning_depth: int = 1,
+        use_reasoning: bool = True,
+    ) -> str:
+        """Generate a chain of thoughts feeding each result as the next prompt."""
+
+        prompt = self._select_prompt()
+        thought = ""
+        for _ in range(max(1, steps)):
+            thought = self._generate_thought(
+                manager,
+                prompt,
+                mood,
+                llm_name,
+                use_reasoning=use_reasoning,
+                reasoning_depth=reasoning_depth,
             )
+            prompt = thought
         return thought
 
     def run(
@@ -112,8 +158,9 @@ class ThinkingEngine:
         think_interval: float = 60.0,
         duration: float | None = None,
         llm_name: str = "local",
-        use_reasoning: bool = False,
+        use_reasoning: bool = True,
         reasoning_depth: int = 1,
+        chain_steps: int = 1,
     ) -> Scheduler:
         """Start periodic background thinking.
 
@@ -132,6 +179,8 @@ class ThinkingEngine:
             introspective thought.
         reasoning_depth:
             Number of reasoning steps for ``ReasoningEngine``.
+        chain_steps:
+            Number of introspective thoughts to chain together per interval.
 
         Returns
         -------
@@ -153,12 +202,13 @@ class ThinkingEngine:
             if entries and entries[-1].emotion_scores:
                 scores = entries[-1].emotion_scores
                 mood = max(scores, key=scores.get)
-            self.think_once(
+            self.think_chain(
                 manager,
                 mood,
+                steps=chain_steps,
                 llm_name=llm_name,
-                use_reasoning=use_reasoning,
                 reasoning_depth=reasoning_depth,
+                use_reasoning=use_reasoning,
             )
             manager._next_think_time = time.monotonic() + think_interval
 

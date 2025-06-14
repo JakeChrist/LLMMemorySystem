@@ -45,9 +45,13 @@ The ThinkingEngine complements the DreamEngine as a passive background process:
 - **Context Reconstruction:** Build a coherent context as the basis for introspective prompting.
 - **LLM Generation:** Send reflective prompts and context to the LLM backend. The
   prompts are issued as a system message so the model replies in the first
-  person instead of addressing the agent as "you". The response represents the
+-  person instead of addressing the agent as "you". The response represents the
   agent's internal thought.
 - **Memory Update:** Store each introspection as an episodic memory tagged `introspection`. Optionally infer semantic or procedural updates.
+- **Thought Chains:** During each thinking interval the engine feeds each generated
+  thought back as the next prompt for a configurable number of steps. Every
+  step is recorded with the `introspection` tag and may invoke the
+  `ReasoningEngine` for deeper analysis.
 - **Triggering:** Support time-based, idle-based and event-based activation.
 
 ### 3.2 Metadata and Logging
