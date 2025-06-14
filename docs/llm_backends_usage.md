@@ -79,7 +79,8 @@ Use `gui` or `cli` in place of `repl` to start the graphical interface or comman
    ```
 2. Start the LMStudio server locally and note its URL.
 3. Optionally set environment variables to override defaults. The timeout can
-   be disabled entirely by setting ``LMSTUDIO_TIMEOUT`` to ``none``:
+   be disabled entirely by setting ``LMSTUDIO_TIMEOUT`` to ``none``. The model
+   name is detected from the server when ``LMSTUDIO_MODEL`` is unset:
    ```bash
    export LMSTUDIO_URL=http://localhost:1234/v1/chat/completions
    export LMSTUDIO_MODEL=my-model-name
