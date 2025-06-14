@@ -8,8 +8,11 @@ logger = Logger(__name__)
 def run_repl(llm_name: str, db_path: str) -> None:
     """Run a simple interactive REPL using ``core.agent.Agent``."""
     from core.agent import Agent
+    from core.cognitive_scheduler import CognitiveScheduler
 
     agent = Agent(llm_name, db_path=db_path)
+    scheduler = CognitiveScheduler(agent.memory, llm_name=llm_name)
+    runner = scheduler.run()
     try:
         while True:
             try:
@@ -22,10 +25,13 @@ def run_repl(llm_name: str, db_path: str) -> None:
                 continue
             if text.lower() in {"exit", "quit"}:
                 break
+            scheduler.notify_input()
             response = agent.receive(text)
             logger.info(response)
     except KeyboardInterrupt:
         print()
+    finally:
+        runner.stop()
 
 
 def main(argv: list[str] | None = None) -> None:

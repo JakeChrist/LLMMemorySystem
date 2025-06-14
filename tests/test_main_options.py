@@ -24,10 +24,15 @@ def test_main_calls_run_repl_with_options(tmp_path):
 
 def test_run_repl_creates_agent(tmp_path):
     db_path = tmp_path / "mem.db"
-    with patch("core.agent.Agent") as MockAgent:
+    with patch("core.agent.Agent") as MockAgent, \
+            patch("core.cognitive_scheduler.CognitiveScheduler") as MockSched:
         agent = MockAgent.return_value
-        agent.receive.side_effect = ["hi"]
+        runner = MagicMock()
+        MockSched.return_value.run.return_value = runner
         with patch("builtins.input", side_effect=EOFError):
             main.run_repl("openai", str(db_path))
         MockAgent.assert_called_once_with("openai", db_path=str(db_path))
+        MockSched.assert_called_once_with(agent.memory, llm_name="openai")
+        MockSched.return_value.run.assert_called_once()
+        runner.stop.assert_called_once()
 
