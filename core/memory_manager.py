@@ -216,6 +216,8 @@ class MemoryManager:
         *,
         interval: float = 60.0,
         llm_name: str = "local",
+        use_reasoning: bool | None = None,
+        reasoning_depth: int | None = None,
     ) -> Scheduler:
         """Start periodic introspective thinking via :class:`ThinkingEngine`.
 
@@ -226,11 +228,20 @@ class MemoryManager:
         # Cancel an existing dreaming loop if present
         self.stop_dreaming()
 
+        cfg = _load_config()
+        r_cfg = cfg.get("reasoning", {})
+        if use_reasoning is None:
+            use_reasoning = r_cfg.get("enabled", False)
+        if reasoning_depth is None:
+            reasoning_depth = r_cfg.get("depth", 1)
+
         engine = ThinkingEngine()
         self._think_scheduler = engine.run(
             self,
             interval=interval,
             llm_name=llm_name,
+            use_reasoning=use_reasoning,
+            reasoning_depth=reasoning_depth,
         )
         self._think_interval = interval
         self._next_think_time = time.monotonic() + interval

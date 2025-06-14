@@ -26,6 +26,7 @@ class ReasoningEngine:
         manager: "MemoryManager",
         topic: str,
         llm_name: str = "local",
+        depth: int = 1,
     ) -> str:
         """Generate a reasoning chain about ``topic``.
 
@@ -37,6 +38,8 @@ class ReasoningEngine:
             Topic or question to reason about.
         llm_name:
             Name of the LLM backend to use.
+        depth:
+            Desired number of reasoning steps.
 
         Returns
         -------
@@ -54,7 +57,7 @@ class ReasoningEngine:
         reconstructor = Reconstructor()
         context = reconstructor.build_context(memories)
         prompt = (
-            f"{context}\nReason step by step about: {topic}" if context else f"Reason step by step about: {topic}"
+            f"{context}\nReason in {depth} steps about: {topic}" if context else f"Reason in {depth} steps about: {topic}"
         )
         llm = llm_router.get_llm(llm_name)
         messages = [
