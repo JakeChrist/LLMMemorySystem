@@ -29,7 +29,8 @@ class CognitiveScheduler:
         T_think: float = 60.0,
         T_dream: float = 300.0,
         T_alarm: float = 1200.0,
-        think_interval: float | None = None,
+        think_interval: float = 60.0,
+        dream_interval: float = 300.0,
         T_delay: float = 1.0,
     ) -> None:
         """Create a scheduler for ``manager`` using ``llm_name`` for background tasks.
@@ -48,6 +49,8 @@ class CognitiveScheduler:
             Maximum sleep duration before automatically waking.
         think_interval:
             Seconds between reflective thoughts while in the reflective state.
+        dream_interval:
+            Seconds between individual dream cycles while asleep.
         T_delay:
             Minimum seconds to wait between consecutive state transitions.
         """
@@ -57,7 +60,8 @@ class CognitiveScheduler:
         self.T_think = T_think
         self.T_dream = T_dream
         self.T_alarm = T_alarm
-        self.think_interval = think_interval if think_interval is not None else T_think
+        self.think_interval = think_interval
+        self.dream_interval = dream_interval
         self.T_delay = T_delay
         self.state = CognitiveState.ACTIVE
         self.last_input = time.monotonic()
@@ -86,11 +90,7 @@ class CognitiveScheduler:
         return sched
 
     def check(self) -> None:
-        """Evaluate idle time and update cognitive state.
-
-        When waking automatically from sleep, ``last_input`` is adjusted so the
-        next invocation transitions into the reflective state after ``T_think``.
-        """
+        """Evaluate idle time and update cognitive state."""
         now = time.monotonic()
         if now - self._last_transition < self.T_delay:
             return
@@ -115,7 +115,7 @@ class CognitiveScheduler:
                 self.state_start = now
                 self._last_transition = now
                 self._dream_sched = self.manager.start_dreaming(
-                    interval=self.T_dream,
+                    interval=self.dream_interval,
                     duration=self.T_dream,
                     llm_name=self.llm_name,
                 )
@@ -126,7 +126,7 @@ class CognitiveScheduler:
                     self.manager.stop_dreaming()
                     self._dream_sched = None
                 # Automatically queue the next reflective phase
-                self.last_input = now - self.T_think
+                self.last_input = now
                 self.state = CognitiveState.ACTIVE
                 self.state_start = now
                 self._last_transition = now
