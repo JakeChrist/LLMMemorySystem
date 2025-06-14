@@ -289,7 +289,7 @@ def start_think(
     llm_name: str = "local",
 ) -> None:
     """Begin periodic thinking using ``MemoryManager`` and block until interrupted."""
-    scheduler = manager.start_thinking(interval=interval, llm_name=llm_name)
+    scheduler = manager.start_thinking(think_interval=interval, llm_name=llm_name)
     logger.info("Thinking started. Press Ctrl+C to stop.")
     try:
         while True:

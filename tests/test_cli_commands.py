@@ -168,7 +168,7 @@ def test_start_and_stop_thinking(monkeypatch):
     monkeypatch.setattr(memory_cli.time, "sleep", lambda *_: (_ for _ in ()).throw(KeyboardInterrupt()))
     memory_cli.start_think(manager, interval=5)
 
-    manager.start_thinking.assert_called_once_with(interval=5, llm_name="local")
+    manager.start_thinking.assert_called_once_with(think_interval=5, llm_name="local")
     scheduler.stop.assert_called_once()
     memory_cli.stop_think(manager)
     manager.stop_thinking.assert_called_once()

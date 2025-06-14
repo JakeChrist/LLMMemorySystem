@@ -29,6 +29,7 @@ class CognitiveScheduler:
         T_think: float = 60.0,
         T_dream: float = 300.0,
         T_alarm: float = 1200.0,
+        think_interval: float | None = None,
     ) -> None:
         """Create a scheduler for ``manager`` using ``llm_name`` for background tasks.
 
@@ -44,6 +45,8 @@ class CognitiveScheduler:
             Duration in seconds to remain asleep and dreaming.
         T_alarm:
             Maximum sleep duration before automatically waking.
+        think_interval:
+            Seconds between reflective thoughts while in the reflective state.
         """
 
         self.manager = manager
@@ -51,6 +54,7 @@ class CognitiveScheduler:
         self.T_think = T_think
         self.T_dream = T_dream
         self.T_alarm = T_alarm
+        self.think_interval = think_interval if think_interval is not None else T_think
         self.state = CognitiveState.ACTIVE
         self.last_input = time.monotonic()
         self.state_start = self.last_input
@@ -85,7 +89,7 @@ class CognitiveScheduler:
                 self.state = CognitiveState.REFLECTIVE
                 self.state_start = now
                 self._think_sched = self.manager.start_thinking(
-                    interval=self.T_think,
+                    think_interval=self.think_interval,
                     duration=self.T_think,
                     llm_name=self.llm_name,
                 )

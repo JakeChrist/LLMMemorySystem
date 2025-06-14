@@ -13,7 +13,7 @@ def test_state_transitions(monkeypatch):
     mm = MemoryManager(db_path=":memory:")
     times = iter([0, 11, 21, 25, 26])
     monkeypatch.setattr(time, "monotonic", lambda: next(times))
-    sched = CognitiveScheduler(mm, T_think=10, T_dream=20, T_alarm=60)
+    sched = CognitiveScheduler(mm, T_think=10, T_dream=20, T_alarm=60, think_interval=5)
 
     start_think = MagicMock()
     start_dream = MagicMock()
@@ -27,7 +27,7 @@ def test_state_transitions(monkeypatch):
     sched.check()
     assert sched.current_state() is CognitiveState.REFLECTIVE
     start_think.assert_called_once()
-    assert start_think.call_args.kwargs.get("interval") == 10
+    assert start_think.call_args.kwargs.get("think_interval") == 5
     assert start_think.call_args.kwargs.get("duration") == 10
 
     sched.check()
@@ -49,7 +49,7 @@ def test_alarm_wakes(monkeypatch):
     mm = MemoryManager(db_path=":memory:")
     times = iter([0, 3, 7, 13, 14])
     monkeypatch.setattr(time, "monotonic", lambda: next(times))
-    sched = CognitiveScheduler(mm, T_think=2, T_dream=4, T_alarm=6)
+    sched = CognitiveScheduler(mm, T_think=2, T_dream=4, T_alarm=6, think_interval=1)
 
     monkeypatch.setattr(mm, "start_dreaming", MagicMock())
     stop_dream = MagicMock()
@@ -74,7 +74,7 @@ def test_idle_period_transitions(monkeypatch):
     mm = MemoryManager(db_path=":memory:")
     times = iter([0, 6, 11, 12, 13])
     monkeypatch.setattr(time, "monotonic", lambda: next(times))
-    scheduler = CognitiveScheduler(mm, T_think=5, T_dream=10, T_alarm=60)
+    scheduler = CognitiveScheduler(mm, T_think=5, T_dream=10, T_alarm=60, think_interval=2)
 
     start_think = MagicMock()
     start_dream = MagicMock()
@@ -88,7 +88,7 @@ def test_idle_period_transitions(monkeypatch):
     scheduler.check()
     assert scheduler.current_state() is CognitiveState.REFLECTIVE
     start_think.assert_called_once()
-    assert start_think.call_args.kwargs.get("interval") == 5
+    assert start_think.call_args.kwargs.get("think_interval") == 2
     assert start_think.call_args.kwargs.get("duration") == 5
 
     scheduler.check()
@@ -110,7 +110,7 @@ def test_thinking_runs_full_duration(monkeypatch):
     mm = MemoryManager(db_path=":memory:")
     times = iter([0, 11, 15, 21])
     monkeypatch.setattr(time, "monotonic", lambda: next(times))
-    sched = CognitiveScheduler(mm, T_think=10, T_dream=12, T_alarm=60)
+    sched = CognitiveScheduler(mm, T_think=10, T_dream=12, T_alarm=60, think_interval=5)
 
     start_think = MagicMock()
     start_dream = MagicMock()

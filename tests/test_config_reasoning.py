@@ -19,7 +19,7 @@ def test_start_thinking_uses_reasoning_config(monkeypatch):
 
     manager = MemoryManager(db_path=":memory:")
     with patch.object(ThinkingEngine, "run", return_value=None) as mock_run:
-        manager.start_thinking(interval=1)
+        manager.start_thinking(think_interval=1)
         _, kwargs = mock_run.call_args
         assert kwargs.get("use_reasoning") is True
         assert kwargs.get("reasoning_depth") == 2

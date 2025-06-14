@@ -229,7 +229,7 @@ class MemoryManager:
     def start_thinking(
         self,
         *,
-        interval: float = 60.0,
+        think_interval: float = 60.0,
         duration: float | None = None,
         llm_name: str = "local",
         use_reasoning: bool | None = None,
@@ -239,7 +239,9 @@ class MemoryManager:
 
         Any active dreaming scheduler will be automatically cancelled before
         launching a new thinking task. The ``duration`` parameter controls how
-        long the thinking loop runs before it automatically stops.
+        long the thinking loop runs before it automatically stops. The
+        ``think_interval`` parameter determines how frequently thoughts are
+        generated during this period.
         """
 
         # Cancel an existing dreaming loop if present
@@ -255,15 +257,15 @@ class MemoryManager:
         engine = ThinkingEngine()
         self._think_scheduler = engine.run(
             self,
-            interval=interval,
+            think_interval=think_interval,
             duration=duration,
             llm_name=llm_name,
             use_reasoning=use_reasoning,
             reasoning_depth=reasoning_depth,
         )
-        self._think_interval = interval
+        self._think_interval = think_interval
         now = time.monotonic()
-        self._next_think_time = now + interval
+        self._next_think_time = now + think_interval
         self._think_end_time = now + duration if duration is not None else None
         return self._think_scheduler
 
