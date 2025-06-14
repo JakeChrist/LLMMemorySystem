@@ -36,9 +36,10 @@ def test_run_invokes_think_once(tmp_path):
 
     with patch("ms_utils.scheduler.Scheduler.schedule", side_effect=immediate):
         with patch.object(engine, "think_once", return_value="x") as mock_once:
-            sched = engine.run(manager, interval=0.1, duration=0.2)
+            sched = engine.run(manager, think_interval=0.1, duration=0.2)
+            call_count = mock_once.call_count
     assert isinstance(sched, Scheduler)
-    assert mock_once.called
+    assert call_count > 1
 
 
 def test_run_executes_without_scheduler(tmp_path):
@@ -47,7 +48,7 @@ def test_run_executes_without_scheduler(tmp_path):
 
     with patch("ms_utils.scheduler.Scheduler.schedule", lambda *a, **k: None):
         with patch.object(engine, "think_once", return_value="x") as mock_once:
-            engine.run(manager, interval=0.1, duration=0.1)
+            engine.run(manager, think_interval=0.1, duration=0.1)
     assert mock_once.called
 
 
@@ -60,7 +61,7 @@ def test_run_stops_after_duration(tmp_path):
 
     with patch("ms_utils.scheduler.Scheduler.schedule", side_effect=immediate), \
             patch("ms_utils.scheduler.Scheduler.stop") as mock_stop:
-        engine.run(manager, interval=0.1, duration=0.2)
+        engine.run(manager, think_interval=0.1, duration=0.2)
     assert mock_stop.called
 
 
@@ -68,7 +69,7 @@ def test_manager_start_thinking_uses_engine():
     manager = MemoryManager(db_path=":memory:")
 
     with patch.object(ThinkingEngine, "run", return_value=None) as mock_run:
-        manager.start_thinking(interval=1, llm_name="openai")
+        manager.start_thinking(think_interval=1, llm_name="openai")
         mock_run.assert_called_once()
         _, kwargs = mock_run.call_args
         assert kwargs.get("llm_name") == "openai"
@@ -84,6 +85,6 @@ def test_start_thinking_stops_dreaming():
 
     think_sched = MagicMock(spec=Scheduler)
     with patch.object(ThinkingEngine, "run", return_value=think_sched):
-        manager.start_thinking(interval=1)
+        manager.start_thinking(think_interval=1)
 
     assert dream_sched.stop.called

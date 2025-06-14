@@ -92,7 +92,7 @@ def test_start_dreaming_stops_thinking():
 
     think_sched = MagicMock(spec=Scheduler)
     with patch.object(ThinkingEngine, "run", return_value=think_sched):
-        manager.start_thinking(interval=1)
+        manager.start_thinking(think_interval=1)
 
     dream_sched = MagicMock(spec=Scheduler)
     with patch.object(DreamEngine, "run", return_value=dream_sched):

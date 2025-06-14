@@ -109,7 +109,7 @@ class ThinkingEngine:
         self,
         manager: "MemoryManager",
         *,
-        interval: float = 60.0,
+        think_interval: float = 60.0,
         duration: float | None = None,
         llm_name: str = "local",
         use_reasoning: bool = False,
@@ -121,7 +121,7 @@ class ThinkingEngine:
         ----------
         manager:
             Memory manager containing episodic entries.
-        interval:
+        think_interval:
             Seconds between each introspection.
         duration:
             Total runtime in seconds before the scheduler automatically stops.
@@ -141,7 +141,7 @@ class ThinkingEngine:
 
         scheduler = Scheduler()
         now = time.monotonic()
-        manager._next_think_time = now + interval
+        manager._next_think_time = now + think_interval
         if duration is not None:
             manager._think_end_time = now + duration
         else:
@@ -160,11 +160,11 @@ class ThinkingEngine:
                 use_reasoning=use_reasoning,
                 reasoning_depth=reasoning_depth,
             )
-            manager._next_think_time = time.monotonic() + interval
+            manager._next_think_time = time.monotonic() + think_interval
 
-        # run once immediately so a thought occurs even if duration == interval
+        # run once immediately so a thought occurs even if duration == think_interval
         _task()
-        scheduler.schedule(interval, _task)
+        scheduler.schedule(think_interval, _task)
 
         if duration is not None:
             def _stop() -> None:
