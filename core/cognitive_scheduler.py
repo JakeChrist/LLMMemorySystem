@@ -5,9 +5,12 @@ from __future__ import annotations
 import time
 from enum import Enum
 from ms_utils.scheduler import Scheduler
+from ms_utils.logger import Logger
 from typing import Optional
 
 from core.memory_manager import MemoryManager
+
+logger = Logger(__name__)
 
 
 class CognitiveState(Enum):
@@ -97,35 +100,42 @@ class CognitiveScheduler:
                 self.state = CognitiveState.REFLECTIVE
                 self.state_start = now
                 self._last_transition = now
+                logger.info("Entering reflective state")
                 self._think_sched = self.manager.start_thinking(
                     think_interval=self.think_interval,
                     duration=self.T_think,
                     llm_name=self.llm_name,
                 )
+                logger.info("Started thinking")
         elif self.state == CognitiveState.REFLECTIVE:
             if now - self.state_start >= self.T_think:
                 if self._think_sched:
                     self.manager.stop_thinking()
                     self._think_sched = None
+                    logger.info("Stopped thinking")
                 self.state = CognitiveState.ASLEEP
                 self.state_start = now
                 self._last_transition = now
+                logger.info("Entering asleep state")
                 self._dream_sched = self.manager.start_dreaming(
                     interval=self.dream_interval,
                     duration=self.T_dream,
                     llm_name=self.llm_name,
                 )
+                logger.info("Started dreaming")
         elif self.state == CognitiveState.ASLEEP:
             elapsed = now - self.state_start
             if elapsed >= self.T_dream:
                 if self._dream_sched:
                     self.manager.stop_dreaming()
                     self._dream_sched = None
+                    logger.info("Stopped dreaming")
                 # Automatically queue the next reflective phase
                 self.last_input = now
                 self.state = CognitiveState.ACTIVE
                 self.state_start = now
                 self._last_transition = now
+                logger.info("Entering active state")
 
     def _stop_engines(self) -> None:
         if self._think_sched:

@@ -7,12 +7,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from core.memory_manager import MemoryManager
 from core.cognitive_scheduler import CognitiveScheduler, CognitiveState
+import core.cognitive_scheduler as cs
 
 
 def test_state_transitions(monkeypatch):
     mm = MemoryManager(db_path=":memory:")
     times = iter([0, 11, 21, 25, 26])
     monkeypatch.setattr(time, "monotonic", lambda: next(times))
+    logger_mock = MagicMock()
+    monkeypatch.setattr(cs, "logger", logger_mock)
     sched = CognitiveScheduler(
         mm,
         T_think=10,
@@ -49,12 +52,15 @@ def test_state_transitions(monkeypatch):
 
     sched.check()
     assert sched.current_state() is CognitiveState.ACTIVE
+    assert logger_mock.info.call_count == 5
 
 
 def test_sleep_wakes(monkeypatch):
     mm = MemoryManager(db_path=":memory:")
     times = iter([0, 3, 7, 13, 14])
     monkeypatch.setattr(time, "monotonic", lambda: next(times))
+    logger_mock = MagicMock()
+    monkeypatch.setattr(cs, "logger", logger_mock)
     sched = CognitiveScheduler(
         mm,
         T_think=2,
@@ -83,11 +89,14 @@ def test_sleep_wakes(monkeypatch):
     sched.check()
     assert sched.current_state() is CognitiveState.ACTIVE
     assert start_think.call_count == 1
+    assert logger_mock.info.call_count == 7
 
 def test_idle_period_transitions(monkeypatch):
     mm = MemoryManager(db_path=":memory:")
     times = iter([0, 6, 11, 12, 13])
     monkeypatch.setattr(time, "monotonic", lambda: next(times))
+    logger_mock = MagicMock()
+    monkeypatch.setattr(cs, "logger", logger_mock)
     scheduler = CognitiveScheduler(
         mm,
         T_think=5,
@@ -124,12 +133,15 @@ def test_idle_period_transitions(monkeypatch):
 
     scheduler.check()
     assert scheduler.current_state() is CognitiveState.ACTIVE
+    assert logger_mock.info.call_count == 5
 
 
 def test_thinking_runs_full_duration(monkeypatch):
     mm = MemoryManager(db_path=":memory:")
     times = iter([0, 11, 15, 21])
     monkeypatch.setattr(time, "monotonic", lambda: next(times))
+    logger_mock = MagicMock()
+    monkeypatch.setattr(cs, "logger", logger_mock)
     sched = CognitiveScheduler(
         mm,
         T_think=10,
@@ -158,3 +170,4 @@ def test_thinking_runs_full_duration(monkeypatch):
     assert sched.current_state() is CognitiveState.ASLEEP
     start_dream.assert_called_once()
     assert start_dream.call_args.kwargs.get("duration") == 12
+    assert logger_mock.info.call_count == 5
