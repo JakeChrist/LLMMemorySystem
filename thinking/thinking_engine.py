@@ -110,6 +110,7 @@ class ThinkingEngine:
         manager: "MemoryManager",
         *,
         interval: float = 60.0,
+        duration: float | None = None,
         llm_name: str = "local",
         use_reasoning: bool = False,
         reasoning_depth: int = 1,
@@ -122,6 +123,8 @@ class ThinkingEngine:
             Memory manager containing episodic entries.
         interval:
             Seconds between each introspection.
+        duration:
+            Total runtime in seconds before the scheduler automatically stops.
         llm_name:
             Name of the LLM backend to use.
         use_reasoning:
@@ -137,7 +140,12 @@ class ThinkingEngine:
         """
 
         scheduler = Scheduler()
-        manager._next_think_time = time.monotonic() + interval
+        now = time.monotonic()
+        manager._next_think_time = now + interval
+        if duration is not None:
+            manager._think_end_time = now + duration
+        else:
+            manager._think_end_time = None
 
         def _task() -> None:
             mood = "neutral"
@@ -155,4 +163,13 @@ class ThinkingEngine:
             manager._next_think_time = time.monotonic() + interval
 
         scheduler.schedule(interval, _task)
+
+        if duration is not None:
+            def _stop() -> None:
+                scheduler.stop()
+                manager._next_think_time = None
+                manager._think_end_time = None
+
+            scheduler.schedule(duration, _stop)
+
         return scheduler

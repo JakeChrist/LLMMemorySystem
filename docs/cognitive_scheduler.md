@@ -5,8 +5,8 @@ processes. It keeps track of the last user interaction and switches between
 three states:
 
 - **Active** – recent user input, no background tasks
-- **Reflective** – idle for `T_think` seconds, starts the ThinkingEngine
-- **Asleep** – idle for `T_dream` seconds, starts the DreamEngine
+- **Reflective** – after `T_think` seconds of inactivity the agent thinks for that duration
+- **Asleep** – once reflection ends the agent dreams for `T_dream` seconds
 
 Dreaming is automatically stopped after `T_alarm` seconds to prevent endless
 sleep. Any user activity immediately wakes the scheduler and cancels running

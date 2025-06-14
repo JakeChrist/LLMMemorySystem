@@ -28,6 +28,7 @@ def test_dream_run_summarizes_and_prunes(tmp_path):
         engine.run(
             manager,
             interval=0.1,
+            duration=0.2,
             summary_size=2,
             max_entries=5,
             store_semantic=True,
@@ -44,6 +45,24 @@ def test_dream_run_summarizes_and_prunes(tmp_path):
     assert any("Dream:" in s for s in sem_entries)
 
 
+def test_dream_run_stops_after_duration(tmp_path):
+    manager = MemoryManager(db_path=tmp_path / "mem.db")
+    engine = DreamEngine()
+
+    def immediate(interval, func, *args, **kwargs):
+        func(*args, **kwargs)
+
+    with patch("ms_utils.scheduler.Scheduler.schedule", side_effect=immediate), \
+            patch("ms_utils.scheduler.Scheduler.stop") as mock_stop, \
+            patch("dreaming.dream_engine.llm_router.get_llm") as mock_get:
+        mock_llm = MagicMock()
+        mock_llm.generate.return_value = "dream"
+        mock_get.return_value = mock_llm
+        engine.run(manager, interval=0.1, duration=0.2)
+
+    assert mock_stop.called
+
+
 def test_manager_start_dreaming_uses_engine():
     manager = MemoryManager(db_path=":memory:")
 
@@ -52,6 +71,7 @@ def test_manager_start_dreaming_uses_engine():
         mock_run.assert_called_once()
         _, kwargs = mock_run.call_args
         assert kwargs.get("llm_name") == "openai"
+        assert kwargs.get("duration") is None
 
 
 def test_start_dreaming_stops_thinking():

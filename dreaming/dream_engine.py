@@ -84,6 +84,7 @@ class DreamEngine:
         manager: MemoryManager,
         *,
         interval: float = 60.0,
+        duration: float | None = None,
         summary_size: int = 5,
         max_entries: int = 100,
         llm_name: str = "local",
@@ -97,6 +98,8 @@ class DreamEngine:
             Memory manager providing episodic entries.
         interval:
             Seconds between summarization runs.
+        duration:
+            Total runtime in seconds before the scheduler stops automatically.
         summary_size:
             Number of most recent memories to summarize.
         max_entries:
@@ -104,7 +107,12 @@ class DreamEngine:
         """
 
         scheduler = Scheduler()
-        manager._next_dream_time = time.monotonic() + interval
+        now = time.monotonic()
+        manager._next_dream_time = now + interval
+        if duration is not None:
+            manager._dream_end_time = now + duration
+        else:
+            manager._dream_end_time = None
 
         def _task() -> None:
             recent = manager.all()[-summary_size:]
@@ -123,4 +131,13 @@ class DreamEngine:
             manager._next_dream_time = time.monotonic() + interval
 
         scheduler.schedule(interval, _task)
+
+        if duration is not None:
+            def _stop() -> None:
+                scheduler.stop()
+                manager._next_dream_time = None
+                manager._dream_end_time = None
+
+            scheduler.schedule(duration, _stop)
+
         return scheduler

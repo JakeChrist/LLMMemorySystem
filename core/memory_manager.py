@@ -31,6 +31,11 @@ class MemoryManager:
         self.procedural = ProceduralMemory()
         self.working = WorkingMemory(working_size)
 
+        self._next_think_time: float | None = None
+        self._think_end_time: float | None = None
+        self._next_dream_time: float | None = None
+        self._dream_end_time: float | None = None
+
         # Load any existing memories from the database into memory stores
         episodic = self.db.load_all()
         self.episodic._entries.extend(episodic)
@@ -172,6 +177,7 @@ class MemoryManager:
         self,
         *,
         interval: float = 60.0,
+        duration: float | None = None,
         summary_size: int = 5,
         max_entries: int = 100,
         llm_name: str = "local",
@@ -179,7 +185,8 @@ class MemoryManager:
         """Start background dreaming with the :class:`DreamEngine`.
 
         Any active thinking scheduler will be automatically stopped before
-        launching a new dreaming task.
+        launching a new dreaming task. The ``duration`` parameter controls how
+        long the dreaming loop runs before stopping automatically.
         """
 
         # Cancel an existing thinking loop if present
@@ -189,12 +196,15 @@ class MemoryManager:
         self._dream_scheduler = engine.run(
             self,
             interval=interval,
+            duration=duration,
             summary_size=summary_size,
             max_entries=max_entries,
             llm_name=llm_name,
         )
         self._dream_interval = interval
-        self._next_dream_time = time.monotonic() + interval
+        now = time.monotonic()
+        self._next_dream_time = now + interval
+        self._dream_end_time = now + duration if duration is not None else None
         return self._dream_scheduler
 
     def stop_dreaming(self) -> None:
@@ -203,18 +213,24 @@ class MemoryManager:
         if isinstance(sched, Scheduler):
             sched.stop()
         self._next_dream_time = None
+        self._dream_end_time = None
 
     def time_until_dream(self) -> float | None:
         """Return seconds until the next scheduled dream or ``None``."""
         next_time = getattr(self, "_next_dream_time", None)
-        if next_time is None:
+        end_time = getattr(self, "_dream_end_time", None)
+        now = time.monotonic()
+        if next_time is None or (end_time is not None and now >= end_time):
             return None
-        return max(0.0, next_time - time.monotonic())
+        if end_time is not None:
+            next_time = min(next_time, end_time)
+        return max(0.0, next_time - now)
 
     def start_thinking(
         self,
         *,
         interval: float = 60.0,
+        duration: float | None = None,
         llm_name: str = "local",
         use_reasoning: bool | None = None,
         reasoning_depth: int | None = None,
@@ -222,7 +238,8 @@ class MemoryManager:
         """Start periodic introspective thinking via :class:`ThinkingEngine`.
 
         Any active dreaming scheduler will be automatically cancelled before
-        launching a new thinking task.
+        launching a new thinking task. The ``duration`` parameter controls how
+        long the thinking loop runs before it automatically stops.
         """
 
         # Cancel an existing dreaming loop if present
@@ -239,12 +256,15 @@ class MemoryManager:
         self._think_scheduler = engine.run(
             self,
             interval=interval,
+            duration=duration,
             llm_name=llm_name,
             use_reasoning=use_reasoning,
             reasoning_depth=reasoning_depth,
         )
         self._think_interval = interval
-        self._next_think_time = time.monotonic() + interval
+        now = time.monotonic()
+        self._next_think_time = now + interval
+        self._think_end_time = now + duration if duration is not None else None
         return self._think_scheduler
 
     def stop_thinking(self) -> None:
@@ -253,10 +273,15 @@ class MemoryManager:
         if isinstance(sched, Scheduler):
             sched.stop()
         self._next_think_time = None
+        self._think_end_time = None
 
     def time_until_think(self) -> float | None:
         """Return seconds until the next scheduled thought or ``None``."""
         next_time = getattr(self, "_next_think_time", None)
-        if next_time is None:
+        end_time = getattr(self, "_think_end_time", None)
+        now = time.monotonic()
+        if next_time is None or (end_time is not None and now >= end_time):
             return None
-        return max(0.0, next_time - time.monotonic())
+        if end_time is not None:
+            next_time = min(next_time, end_time)
+        return max(0.0, next_time - now)

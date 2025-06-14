@@ -39,9 +39,9 @@ class CognitiveScheduler:
         llm_name:
             LLM backend used by the thinking and dreaming engines.
         T_think:
-            Idle time in seconds before entering the reflective state.
+            Duration in seconds to remain in the reflective state.
         T_dream:
-            Idle time in seconds before starting the dreaming engine.
+            Duration in seconds to remain asleep and dreaming.
         T_alarm:
             Maximum sleep duration before automatically waking.
         """
@@ -81,22 +81,16 @@ class CognitiveScheduler:
         idle = now - self.last_input
 
         if self.state == CognitiveState.ACTIVE:
-            if idle >= self.T_dream:
-                self.state = CognitiveState.ASLEEP
-                self.state_start = now
-                self._dream_sched = self.manager.start_dreaming(
-                    interval=self.T_dream,
-                    llm_name=self.llm_name,
-                )
-            elif idle >= self.T_think:
+            if idle >= self.T_think:
                 self.state = CognitiveState.REFLECTIVE
                 self.state_start = now
                 self._think_sched = self.manager.start_thinking(
                     interval=self.T_think,
+                    duration=self.T_think,
                     llm_name=self.llm_name,
                 )
         elif self.state == CognitiveState.REFLECTIVE:
-            if idle >= self.T_dream:
+            if now - self.state_start >= self.T_think:
                 if self._think_sched:
                     self.manager.stop_thinking()
                     self._think_sched = None
@@ -104,10 +98,12 @@ class CognitiveScheduler:
                 self.state_start = now
                 self._dream_sched = self.manager.start_dreaming(
                     interval=self.T_dream,
+                    duration=self.T_dream,
                     llm_name=self.llm_name,
                 )
         elif self.state == CognitiveState.ASLEEP:
-            if now - self.state_start >= self.T_alarm:
+            elapsed = now - self.state_start
+            if elapsed >= self.T_dream or elapsed >= self.T_alarm:
                 if self._dream_sched:
                     self.manager.stop_dreaming()
                     self._dream_sched = None
