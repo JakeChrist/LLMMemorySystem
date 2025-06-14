@@ -8,7 +8,7 @@ from core.memory_manager import MemoryManager
 from reasoning.reasoning_engine import ReasoningEngine
 
 
-def test_reason_once_stores_reasoning():
+def test_reason_once_stores_reasoning_memory():
     manager = MemoryManager(db_path=":memory:")
     engine = ReasoningEngine()
     with patch("reasoning.reasoning_engine.llm_router.get_llm") as mock_get, \
@@ -25,7 +25,7 @@ def test_reason_once_stores_reasoning():
     assert "reasoning" in entry.metadata.get("tags", [])
 
 
-def test_plan_stores_procedural():
+def test_plan_generates_procedural_memory():
     manager = MemoryManager(db_path=":memory:")
     engine = ReasoningEngine()
     with patch("reasoning.reasoning_engine.llm_router.get_llm") as mock_get, \
