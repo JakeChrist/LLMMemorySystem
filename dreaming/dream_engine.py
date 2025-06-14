@@ -130,6 +130,8 @@ class DreamEngine:
             manager.prune(max_entries)
             manager._next_dream_time = time.monotonic() + interval
 
+        # ensure the first summary occurs even when duration == interval
+        _task()
         scheduler.schedule(interval, _task)
 
         if duration is not None:
