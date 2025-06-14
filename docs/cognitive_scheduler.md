@@ -9,10 +9,7 @@ three states:
 - **Asleep** – once reflection ends the agent dreams for `T_dream` seconds
 
 State transitions wait at least `T_delay` seconds before the next phase begins.
-
-Dreaming is automatically stopped after `T_alarm` seconds to prevent endless
-sleep. Any user activity immediately wakes the scheduler and cancels running
-engines.
+Any user activity immediately wakes the scheduler and cancels running engines.
 
 The scheduler forwards the agent's configured LLM backend to both the thinking
 and dreaming engines so background activities use the same model as interactive

@@ -17,7 +17,6 @@ def test_state_transitions(monkeypatch):
         mm,
         T_think=10,
         T_dream=20,
-        T_alarm=60,
         think_interval=5,
         dream_interval=20,
     )
@@ -52,7 +51,7 @@ def test_state_transitions(monkeypatch):
     assert sched.current_state() is CognitiveState.ACTIVE
 
 
-def test_alarm_wakes(monkeypatch):
+def test_sleep_wakes(monkeypatch):
     mm = MemoryManager(db_path=":memory:")
     times = iter([0, 3, 7, 13, 14])
     monkeypatch.setattr(time, "monotonic", lambda: next(times))
@@ -60,7 +59,6 @@ def test_alarm_wakes(monkeypatch):
         mm,
         T_think=2,
         T_dream=4,
-        T_alarm=6,
         think_interval=1,
         dream_interval=4,
     )
@@ -94,7 +92,6 @@ def test_idle_period_transitions(monkeypatch):
         mm,
         T_think=5,
         T_dream=10,
-        T_alarm=60,
         think_interval=2,
         dream_interval=10,
     )
@@ -137,7 +134,6 @@ def test_thinking_runs_full_duration(monkeypatch):
         mm,
         T_think=10,
         T_dream=12,
-        T_alarm=60,
         think_interval=5,
         dream_interval=12,
     )
