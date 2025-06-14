@@ -199,6 +199,7 @@ def test_settings_dialog_updates_scheduler(monkeypatch):
     scheduler.T_think = 5.0
     scheduler.T_dream = 10.0
     scheduler.T_alarm = 20.0
+    scheduler.T_delay = 1.0
     scheduler.notify_input = MagicMock()
 
     gui = MemorySystemGUI(None, scheduler=scheduler)
@@ -212,7 +213,7 @@ def test_settings_dialog_updates_scheduler(monkeypatch):
             return QDialog.Accepted
 
         def values(self):
-            return 1.0, 2.0, 3.0, None, "openai", "new.db"
+            return 1.0, 2.0, 3.0, 0.5, None, "openai", "new.db"
 
     monkeypatch.setattr(gui_mod, "SchedulerSettingsDialog", FakeDialog)
     mock_llm = MagicMock()
@@ -224,6 +225,7 @@ def test_settings_dialog_updates_scheduler(monkeypatch):
     assert scheduler.T_think == 1.0
     assert scheduler.T_dream == 2.0
     assert scheduler.T_alarm == 3.0
+    assert scheduler.T_delay == 0.5
     assert scheduler.llm_name == "openai"
     assert scheduler.notify_input.called
     assert not mock_llm.called
@@ -241,6 +243,7 @@ def test_settings_dialog_updates_lmstudio_timeout(monkeypatch):
     scheduler.T_think = 5.0
     scheduler.T_dream = 10.0
     scheduler.T_alarm = 20.0
+    scheduler.T_delay = 1.0
     scheduler.notify_input = MagicMock()
     scheduler.agent = agent
     scheduler.manager = agent.memory
@@ -257,7 +260,7 @@ def test_settings_dialog_updates_lmstudio_timeout(monkeypatch):
             return QDialog.Accepted
 
         def values(self):
-            return 1.0, 2.0, 3.0, 42.0, "openai", str(tmp_path / "new.db")
+            return 1.0, 2.0, 3.0, 0.5, 42.0, "openai", str(tmp_path / "new.db")
 
     monkeypatch.setattr(gui_mod, "SchedulerSettingsDialog", FakeDialog)
     new_llm = MagicMock()
@@ -274,6 +277,7 @@ def test_settings_dialog_updates_lmstudio_timeout(monkeypatch):
     assert scheduler.T_think == 1.0
     assert scheduler.T_dream == 2.0
     assert scheduler.T_alarm == 3.0
+    assert scheduler.T_delay == 0.5
     assert agent.llm is new_llm
     assert scheduler.llm_name == "openai"
     assert paths["db"] == str(tmp_path / "new.db")
@@ -292,6 +296,7 @@ def test_settings_dialog_saves(monkeypatch, tmp_path):
     scheduler.T_think = 5.0
     scheduler.T_dream = 10.0
     scheduler.T_alarm = 20.0
+    scheduler.T_delay = 1.0
     scheduler.notify_input = MagicMock()
     scheduler.agent = MagicMock()
     scheduler.agent.llm = LMStudioBackend(timeout=30)
@@ -309,7 +314,7 @@ def test_settings_dialog_saves(monkeypatch, tmp_path):
             return QDialog.Accepted
 
         def values(self):
-            return 1.0, 2.0, 3.0, 40.0, "openai", str(tmp_path / "new.db")
+            return 1.0, 2.0, 3.0, 0.5, 40.0, "openai", str(tmp_path / "new.db")
 
     saved = {}
     monkeypatch.setattr(gui_mod, "SchedulerSettingsDialog", FakeDialog)
@@ -320,6 +325,7 @@ def test_settings_dialog_saves(monkeypatch, tmp_path):
     gui.settings_action.trigger()
 
     assert saved["T_think"] == 1.0
+    assert saved["T_delay"] == 0.5
     assert saved["llm_name"] == "openai"
     assert saved["db_path"] == str(tmp_path / "new.db")
     assert saved["lmstudio_timeout"] == 40.0
@@ -550,6 +556,7 @@ def test_run_gui_loads_settings(tmp_path, monkeypatch):
         "T_think": 1.0,
         "T_dream": 2.0,
         "T_alarm": 3.0,
+        "T_delay": 0.5,
         "llm_name": "openai",
         "db_path": str(tmp_path / "new.db"),
         "lmstudio_timeout": 50.0,
@@ -566,6 +573,7 @@ def test_run_gui_loads_settings(tmp_path, monkeypatch):
     scheduler.T_think = 5.0
     scheduler.T_dream = 10.0
     scheduler.T_alarm = 20.0
+    scheduler.T_delay = 1.0
     scheduler.llm_name = "local"
     scheduler.manager = agent.memory
 
@@ -586,6 +594,7 @@ def test_run_gui_loads_settings(tmp_path, monkeypatch):
     gui_mod.run_gui(agent, scheduler)
 
     assert scheduler.T_think == 1.0
+    assert scheduler.T_delay == 0.5
     assert scheduler.llm_name == "openai"
     assert str(scheduler.manager.db.path) == str(tmp_path / "new.db")
     assert agent.llm is new_llm

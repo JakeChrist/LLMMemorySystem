@@ -139,6 +139,11 @@ class SchedulerSettingsDialog(QDialog):
         self.alarm_spin.setValue(scheduler.T_alarm)
         form.addRow("T_alarm (s)", self.alarm_spin)
 
+        self.delay_spin = QDoubleSpinBox()
+        self.delay_spin.setRange(0.0, 60.0)
+        self.delay_spin.setValue(scheduler.T_delay)
+        form.addRow("T_delay (s)", self.delay_spin)
+
         agent = getattr(scheduler, "agent", None)
 
         self.model_combo = QComboBox()
@@ -187,6 +192,7 @@ class SchedulerSettingsDialog(QDialog):
             self.think_spin.value(),
             self.dream_spin.value(),
             self.alarm_spin.value(),
+            self.delay_spin.value(),
             timeout,
             self.model_combo.currentText(),
             self.db_edit.text(),
@@ -512,10 +518,11 @@ class MemorySystemGUI(QWidget):
             return
         dlg = SchedulerSettingsDialog(self.scheduler)
         if dlg.exec() == QDialog.Accepted:
-            think, dream, alarm, timeout, llm_name, db_path = dlg.values()
+            think, dream, alarm, delay, timeout, llm_name, db_path = dlg.values()
             self.scheduler.T_think = think
             self.scheduler.T_dream = dream
             self.scheduler.T_alarm = alarm
+            self.scheduler.T_delay = delay
             self.scheduler.llm_name = llm_name
             self.scheduler.notify_input()
 
@@ -539,6 +546,7 @@ class MemorySystemGUI(QWidget):
                 "T_think": self.scheduler.T_think,
                 "T_dream": self.scheduler.T_dream,
                 "T_alarm": self.scheduler.T_alarm,
+                "T_delay": self.scheduler.T_delay,
                 "llm_name": self.scheduler.llm_name,
                 "db_path": str(self.agent.memory.db.path) if self.agent else "",
                 "lmstudio_timeout": (
@@ -674,6 +682,7 @@ def run_gui(agent=None, scheduler=None):
         scheduler.T_think = cfg.get("T_think", scheduler.T_think)
         scheduler.T_dream = cfg.get("T_dream", scheduler.T_dream)
         scheduler.T_alarm = cfg.get("T_alarm", scheduler.T_alarm)
+        scheduler.T_delay = cfg.get("T_delay", scheduler.T_delay)
         scheduler.llm_name = cfg.get("llm_name", scheduler.llm_name)
 
         if agent.llm_name != scheduler.llm_name:
