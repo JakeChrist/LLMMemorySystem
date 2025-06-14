@@ -43,6 +43,7 @@ class ThinkingEngine:
         mood: str,
         llm_name: str = "local",
         use_reasoning: bool = False,
+        reasoning_depth: int = 1,
     ) -> str:
         """Generate one introspective thought.
 
@@ -57,6 +58,8 @@ class ThinkingEngine:
         use_reasoning:
             If ``True``, generate an additional reasoning step about the
             produced thought.
+        reasoning_depth:
+            Number of steps to pass to :class:`ReasoningEngine`.
 
         Returns
         -------
@@ -97,7 +100,9 @@ class ThinkingEngine:
         )
         if use_reasoning:
             reasoning_engine = ReasoningEngine()
-            reasoning_engine.reason_once(manager, thought, llm_name=llm_name)
+            reasoning_engine.reason_once(
+                manager, thought, llm_name=llm_name, depth=reasoning_depth
+            )
         return thought
 
     def run(
@@ -107,6 +112,7 @@ class ThinkingEngine:
         interval: float = 60.0,
         llm_name: str = "local",
         use_reasoning: bool = False,
+        reasoning_depth: int = 1,
     ) -> Scheduler:
         """Start periodic background thinking.
 
@@ -121,6 +127,8 @@ class ThinkingEngine:
         use_reasoning:
             If ``True``, run :meth:`ReasoningEngine.reason_once` after each
             introspective thought.
+        reasoning_depth:
+            Number of reasoning steps for ``ReasoningEngine``.
 
         Returns
         -------
@@ -142,6 +150,7 @@ class ThinkingEngine:
                 mood,
                 llm_name=llm_name,
                 use_reasoning=use_reasoning,
+                reasoning_depth=reasoning_depth,
             )
             manager._next_think_time = time.monotonic() + interval
 

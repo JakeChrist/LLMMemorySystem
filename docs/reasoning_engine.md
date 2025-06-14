@@ -13,3 +13,18 @@ The `ReasoningEngine` performs explicit chain-of-thought reasoning and planning 
 
 ## Logging and Tagging
 All prompts, retrieved memory identifiers and LLM outputs are logged via `ms_utils.logger.Logger`. Resulting memory entries are tagged `reasoning`, `inference` or `plan` for later retrieval and analysis.
+
+## Configuration
+
+Reasoning behavior is controlled by the `reasoning` section in
+`config/default_config.yaml`:
+
+```yaml
+reasoning:
+  enabled: true        # enable reasoning during thinking cycles
+  depth: 3             # number of reasoning steps to request
+```
+
+When `MemoryManager.start_thinking` is called without explicit options, these
+values determine whether the `ReasoningEngine` is invoked and how many steps it
+should request from the LLM.
