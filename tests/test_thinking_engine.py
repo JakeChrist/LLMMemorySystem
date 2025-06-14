@@ -41,6 +41,16 @@ def test_run_invokes_think_once(tmp_path):
     assert mock_once.called
 
 
+def test_run_executes_without_scheduler(tmp_path):
+    manager = MemoryManager(db_path=tmp_path / "mem.db")
+    engine = ThinkingEngine(prompts=["reflect"])
+
+    with patch("ms_utils.scheduler.Scheduler.schedule", lambda *a, **k: None):
+        with patch.object(engine, "think_once", return_value="x") as mock_once:
+            engine.run(manager, interval=0.1, duration=0.1)
+    assert mock_once.called
+
+
 def test_run_stops_after_duration(tmp_path):
     manager = MemoryManager(db_path=tmp_path / "mem.db")
     engine = ThinkingEngine(prompts=["reflect"])

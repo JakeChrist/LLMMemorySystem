@@ -45,6 +45,19 @@ def test_dream_run_summarizes_and_prunes(tmp_path):
     assert any("Dream:" in s for s in sem_entries)
 
 
+def test_dream_run_executes_without_scheduler(tmp_path):
+    manager = MemoryManager(db_path=tmp_path / "mem.db")
+    for i in range(3):
+        manager.add(f"event {i}")
+
+    with patch("ms_utils.scheduler.Scheduler.schedule", lambda *a, **k: None), \
+            patch.object(DreamEngine, "summarize", return_value=("d", [], {})) as mock_sum:
+        engine = DreamEngine()
+        engine.run(manager, interval=0.1, duration=0.1)
+
+    assert mock_sum.called
+
+
 def test_dream_run_stops_after_duration(tmp_path):
     manager = MemoryManager(db_path=tmp_path / "mem.db")
     engine = DreamEngine()

@@ -162,6 +162,8 @@ class ThinkingEngine:
             )
             manager._next_think_time = time.monotonic() + interval
 
+        # run once immediately so a thought occurs even if duration == interval
+        _task()
         scheduler.schedule(interval, _task)
 
         if duration is not None:
