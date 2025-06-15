@@ -89,9 +89,12 @@ class ThinkingEngine:
             metadata={"prompt": prompt, "tags": ["introspection"]},
         )
         if use_reasoning:
-            ReasoningEngine().reason_once(
-                manager, thought, llm_name=llm_name, depth=reasoning_depth
-            )
+            try:
+                ReasoningEngine().reason_once(
+                    manager, thought, llm_name=llm_name, depth=reasoning_depth
+                )
+            except Exception as exc:  # pragma: no cover - log and continue
+                logger.warning(f"Reasoning step failed: {exc}")
         return thought
 
     def think_once(
