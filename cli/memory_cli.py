@@ -65,7 +65,7 @@ def dream_summary(db: Database) -> None:
     """Generate a dream summary from all memories."""
     memories = db.load_all()
     engine = DreamEngine()
-    summary = engine.summarize(memories, log=False)
+    summary, _, _ = engine.summarize(memories, log=False)
     logger.info(summary)
 
 
